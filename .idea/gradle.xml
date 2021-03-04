@@ -8,6 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/catalogservice" />
           </set>
         </option>
       </GradleProjectSettings>
@@ -17,7 +18,6 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/catalogservice" />
-            <option value="$PROJECT_DIR$/catalogservice/catalogservice" />
           </set>
         </option>
       </GradleProjectSettings>
