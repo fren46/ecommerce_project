@@ -1,3 +1,2 @@
-
 rootProject.name = "eCommerce"
-include("catalogservice")
+include("commons","catalogservice", "orderservice", "walletservice", "warehouseservice")
