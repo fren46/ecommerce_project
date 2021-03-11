@@ -10,11 +10,11 @@ import org.springframework.data.mongodb.config.AbstractMongoClientConfiguration
 @Configuration
 class MongoConfig : AbstractMongoClientConfiguration() {
     override fun getDatabaseName(): String {
-        return "commons"
+        return "catalog"
     }
 
     override fun mongoClient(): MongoClient {
-        val connectionString = ConnectionString("mongodb://localhost:27017/commons")
+        val connectionString = ConnectionString("mongodb://localhost:27017/catalog")
         val mongoClientSettings = MongoClientSettings.builder()
             .applyConnectionString(connectionString)
             .build()

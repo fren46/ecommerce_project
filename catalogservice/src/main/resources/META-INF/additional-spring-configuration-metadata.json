@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "additional-db.external.uri",
+      "type": "java.lang.String",
+      "description": "Description for additional-db.external.uri."
+  }
+] }
