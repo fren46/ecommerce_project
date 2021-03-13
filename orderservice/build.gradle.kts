@@ -5,6 +5,8 @@ plugins {
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm") version "1.4.30"
     kotlin("plugin.spring") version "1.4.30"
+    id("org.jetbrains.kotlin.plugin.noarg") version "1.4.31"
+    kotlin("kapt") version "1.4.30"
 }
 
 group = "com.ecomm"
@@ -22,8 +24,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation( project(":commons"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.modelmapper:modelmapper:2.3.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    compileOnly("org.mapstruct:mapstruct:1.3.1.Final")
+    kapt("org.mapstruct:mapstruct-processor:1.3.1.Final")
 }
 
 tasks.withType<KotlinCompile> {

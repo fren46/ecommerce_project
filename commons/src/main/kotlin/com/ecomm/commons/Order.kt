@@ -5,13 +5,13 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.util.*
 
-@Document
+@Document("orders")
 class Order(
     @Id
     val id: ObjectId = ObjectId.get(),
-    val buyer: User,
-    val prodList: Dictionary<Product, Int>,
-    val prodPrice: Dictionary<Product, Float>,
-    val amount: Float,
-    val status: OrderStatus
+    val buyer: User? = null,
+    val prodList: Map<Product, Int> = mapOf<Product, Int>(),
+    val prodPrice: Map<Product, Float> = mapOf<Product, Float>(),
+    val amount: Float? = null,
+    val status: OrderStatus? = null
 )
