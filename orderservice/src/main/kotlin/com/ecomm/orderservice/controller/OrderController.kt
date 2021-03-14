@@ -46,16 +46,14 @@ class OrderController(
             throw ResponseStatusException(HttpStatus.NOT_FOUND);
 
     }
-    /*
-    @PutMapping("/{id}")
+    @PutMapping()
     fun modifyOrder(@RequestBody order: OrderDTO): OrderDTO {
-        val p = order.id?.let { orderServiceImpl.getOrder(it) }
-        if(p?.isPresent == true)
-            return mapper.toDto(p.get())
+        val res = orderServiceImpl.modifyOrder(order)
+        if(res.isPresent)
+            return mapper.toDto(res.get())
         else
             throw ResponseStatusException(HttpStatus.NOT_FOUND);
     }
-*/
     /*@GetMapping("/open/{id}")
     fun getProductOpen(@PathVariable id: ObjectId): ResponseEntity<OrderDTO> {
         val p = orderServiceImpl.getOrder(id)
