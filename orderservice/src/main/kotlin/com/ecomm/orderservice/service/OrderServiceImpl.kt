@@ -9,6 +9,10 @@ import org.mapstruct.factory.Mappers
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.*
 
 @Service
@@ -26,6 +30,12 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     override fun createOrder(dto: OrderDTO): Order {
         //TODO Implement correctly the transaction order by consulting the endpoints of wallet and warehouse.
+        val client = HttpClient.newBuilder().build();
+        val request = HttpRequest.newBuilder()
+            .uri(URI.create("http://webcode.me"))
+            .build();
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        println(response.body())
         return orderRepository.save(mapper.toModel(dto))
     }
 
@@ -47,7 +57,6 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
         val order = dto.id?.let { orderRepository.findById(it) }
         return if (order != null) {
             if(order.isPresent && order.get().status == OrderStatus.Pending) {
-                print("GET IT")
                 val modified = orderRepository.save(mapper.toModel(dto))
                 val opt = Optional.of(modified)
                 opt
