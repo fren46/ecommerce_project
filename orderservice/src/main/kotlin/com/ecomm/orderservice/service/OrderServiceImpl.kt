@@ -13,6 +13,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.time.LocalDateTime
 import java.util.*
 
 @Service
@@ -21,21 +22,27 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     private val mapper = Mappers.getMapper(OrderMapper::class.java);
 
     fun createFakeOrder(dto: OrderDTO): Order {
-        return orderRepository.save(mapper.toModel(dto))
+
+        return orderRepository.insert(mapper.toModel(OrderDTO(
+            id = dto.id,
+            buyer = dto.buyer,
+            prodList = dto.prodList,
+            prodPrice = dto.prodPrice,
+            amount = dto.amount,
+            status = dto.status,
+            modifiedDate = LocalDateTime.now(),
+            createdDate = LocalDateTime.now()
+        )))
     }
 
     fun getOrders(): List<Order> {
+
         return orderRepository.findAll()
     }
 
     override fun createOrder(dto: OrderDTO): Order {
         //TODO Implement correctly the transaction order by consulting the endpoints of wallet and warehouse.
-        val client = HttpClient.newBuilder().build();
-        val request = HttpRequest.newBuilder()
-            .uri(URI.create("http://webcode.me"))
-            .build();
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        println(response.body())
+
         return orderRepository.save(mapper.toModel(dto))
     }
 
@@ -54,10 +61,26 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     }
 
     override fun modifyOrder(dto: OrderDTO): Optional<Order> {
+    /* For testing purposes
+        val orders = dto.status?.let { orderRepository.findAllByStatus(it) }
+        if (orders != null) {
+            for (o in orders)
+                print("\n" + o.id + "\n")
+        }
+    */
         val order = dto.id?.let { orderRepository.findById(it) }
         return if (order != null) {
             if(order.isPresent && order.get().status == OrderStatus.Pending) {
-                val modified = orderRepository.save(mapper.toModel(dto))
+                val modified = orderRepository.save(mapper.toModel(
+                    OrderDTO(
+                        id = dto.id,
+                        buyer = dto.buyer,
+                        prodList = dto.prodList,
+                        prodPrice = dto.prodPrice,
+                        amount = dto.amount,
+                        status = dto.status,
+                        modifiedDate = LocalDateTime.now()
+                )))
                 val opt = Optional.of(modified)
                 opt
             } else
