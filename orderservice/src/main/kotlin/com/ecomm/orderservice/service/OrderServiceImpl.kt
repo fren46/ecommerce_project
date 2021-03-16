@@ -55,7 +55,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     }
 
     override fun modifyOrder(dto: OrderDTO): Optional<Order> {
-    /* For testing purposes
+        /* For testing purposes
         val orders = dto.status?.let { orderRepository.findAllByStatus(it) }
         if (orders != null) {
             for (o in orders)
@@ -63,24 +63,47 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
         }
     */
         val order = dto.id?.let { orderRepository.findById(it) }
-        return if (order != null) {
-            if(order.isPresent && order.get().status == OrderStatus.Pending) {
-                val modified = orderRepository.save(mapper.toModel(
-                    OrderDTO(
-                        id = dto.id,
-                        buyer = dto.buyer ?: order.get().buyer,
-                        prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
-                        prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
-                        amount = dto.amount ?: order.get().amount,
-                        status = dto.status ?: order.get().status.toString(),
-                        modifiedDate = LocalDateTime.now(),
-                        createdDate = order.get().createdDate
-                )))
-                val opt = Optional.of(modified)
-                opt
+        if (order != null) {
+            if (order.isPresent) {
+                if (order.get().status == OrderStatus.Pending) {
+                    val modified = orderRepository.save(
+                        mapper.toModel(
+                            OrderDTO(
+                                id = dto.id,
+                                buyer = dto.buyer ?: order.get().buyer,
+                                prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
+                                prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
+                                amount = dto.amount ?: order.get().amount,
+                                status = dto.status ?: order.get().status.toString(),
+                                modifiedDate = LocalDateTime.now(),
+                                createdDate = order.get().createdDate
+                            )
+                        )
+                    )
+                    val opt = Optional.of(modified)
+                    return opt
+                } else if (order.get().status != OrderStatus.Canceled) {
+                    val onlyStatus = orderRepository.save(
+                        mapper.toModel(
+                            OrderDTO(
+                                id = order.get().id,
+                                buyer = order.get().buyer,
+                                prodList = order.get().prodList,
+                                prodPrice = order.get().prodPrice,
+                                amount = order.get().amount,
+                                status = dto.status ?: order.get().status.toString(),
+                                modifiedDate = if(dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
+                                createdDate = order.get().createdDate
+                            )
+                        )
+                    )
+                    val opt = Optional.of(onlyStatus)
+                    return opt
+                } else
+                    return order
             } else
-                order
+                return order
         } else
-            order as Optional<Order>
-        }
+            return order as Optional<Order>
+    }
 }
