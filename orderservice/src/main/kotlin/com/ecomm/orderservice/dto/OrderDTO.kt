@@ -1,7 +1,6 @@
 package com.ecomm.orderservice.dto
 
 import java.time.LocalDateTime
-import java.util.*
 
 data class OrderDTO(
     var id: String? = null,

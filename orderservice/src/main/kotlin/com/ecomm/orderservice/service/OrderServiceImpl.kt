@@ -6,13 +6,7 @@ import com.ecomm.orderservice.dto.OrderDTO
 import com.ecomm.orderservice.dto.OrderMapper
 import com.ecomm.orderservice.repo.OrderRepository
 import org.mapstruct.factory.Mappers
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.time.LocalDateTime
 import java.util.*
 
@@ -74,12 +68,13 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 val modified = orderRepository.save(mapper.toModel(
                     OrderDTO(
                         id = dto.id,
-                        buyer = dto.buyer,
-                        prodList = dto.prodList,
-                        prodPrice = dto.prodPrice,
-                        amount = dto.amount,
-                        status = dto.status,
-                        modifiedDate = LocalDateTime.now()
+                        buyer = dto.buyer ?: order.get().buyer,
+                        prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
+                        prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
+                        amount = dto.amount ?: order.get().amount,
+                        status = dto.status ?: order.get().status.toString(),
+                        modifiedDate = LocalDateTime.now(),
+                        createdDate = order.get().createdDate
                 )))
                 val opt = Optional.of(modified)
                 opt
