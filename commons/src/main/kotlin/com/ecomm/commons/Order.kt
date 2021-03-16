@@ -19,4 +19,10 @@ class Order(
     var prodPrice: MutableMap<String, Float> = mutableMapOf<String, Float>(),
     var amount: Float? = null,
     var status: OrderStatus = OrderStatus.Pending
-)
+) {
+    override fun toString(): String {
+        return "{ID: " + this.id + ", created: " + this.createdDate +
+        ", modified: " + this.modifiedDate + ", buyer: " + this.buyer +
+                ", amount: " + this.amount + ", status: " + this.status + "}"
+    }
+}

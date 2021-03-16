@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface OrderRepository:MongoRepository<Order,String>{
     fun findAllByStatus(status: String): List<Order>
+    fun findAllByStatusOrderByModifiedDateAsc(status: OrderStatus): List<Order>
     override fun deleteAll()
 }
