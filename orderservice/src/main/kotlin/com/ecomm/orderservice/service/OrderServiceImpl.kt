@@ -23,7 +23,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
             prodList = dto.prodList,
             prodPrice = dto.prodPrice,
             amount = dto.amount,
-            status = dto.status,
+            status = OrderStatus.Pending.toString(),
             modifiedDate = LocalDateTime.now(),
             createdDate = LocalDateTime.now()
         )))
