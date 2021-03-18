@@ -1,0 +1,9 @@
+server:
+  portOrderService: 8081
+  portWalletService: 8082
+  portWarehouseService: 8083
+
+application:
+  urlOrderService: "localhost:8081"
+  urlWalletService: "localhost:8082"
+  urlWarehouseService: "localhost:8083"
