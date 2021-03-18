@@ -25,6 +25,7 @@ class OrderController(
 
     @GetMapping()
     fun getOrders(): ResponseEntity<List<OrderDTO>> {
+
         return ResponseEntity.ok(mapper.toDtos(orderServiceImpl.getOrders()))
     }
 

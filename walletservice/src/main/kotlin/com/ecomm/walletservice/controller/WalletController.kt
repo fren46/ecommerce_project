@@ -1,5 +1,6 @@
 package com.ecomm.walletservice.controller
 
+import com.ecomm.walletservice.dto.TransactionDTO
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -10,12 +11,10 @@ class WalletController { //(val: walletService: WalletService) {
     //fun getAmounth(): Float
 
     //@GetMapping("/transaction")
-    //fun getTransaction(): List<TransactionDTO>
+    //fun getTransaction(): Collection<TransactionDTO>
 
     //@PostMapping("/transaction/add")
     //fun addTransaction(@RequestBody t: TransactionDTO?) {
-//
-//
-//     }
+// }
 }
 
