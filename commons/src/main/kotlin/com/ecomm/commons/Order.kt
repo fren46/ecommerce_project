@@ -11,7 +11,7 @@ import java.util.*
 
 @Document("orders")
 class Order(
-    @Id var id: String? = ObjectId.get().toHexString(),
+    @Id var id: String? = ObjectId.get().toString(),
     @CreatedDate var createdDate: LocalDateTime? = null,
     @LastModifiedDate var modifiedDate: LocalDateTime? = null,
     var buyer: String? = null,
