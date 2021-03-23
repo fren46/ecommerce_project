@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class Initializer:CommandLineRunner {
+
     @Autowired
     lateinit var repo:UserRepository
 
@@ -20,7 +21,6 @@ class Initializer:CommandLineRunner {
         repo.save(user1)
         repo.save(user2)
         repo.save(user3)
-
 
     }
 }
