@@ -60,13 +60,11 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     @KafkaListener(topics = ["status"], groupId = "group_id")
     @Throws(IOException::class)
-    fun consume(@Payload message: String, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
-        val jsonMapper = ObjectMapper()
-        jsonMapper.registerModule(JavaTimeModule())
-        print(key)
-        val order = jsonMapper.readValue(message, OrderDTO::class.java)
-
-        print(order.toString())
+    fun consume(@Payload message: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        if(key == KEY_ORDER_PAID)
+            TODO("The order is paid, modify its status and update it into the DB")
+        else if(key == KEY_ORDER_CANCELED)
+            TODO("The order is canceled, modify its status into the DB. All the other services will receive the info and will perform the rollbacks")
     }
 
     fun getOrders(): List<Order> {
