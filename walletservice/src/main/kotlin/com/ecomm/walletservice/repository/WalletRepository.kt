@@ -1,8 +1,7 @@
 package com.ecomm.walletservice.repository
-
-import com.ecomm.walletservice.dto.TransactionDTO
+import com.ecomm.commons.Transaction
 import org.springframework.data.mongodb.repository.MongoRepository
 
-interface WalletRepository: MongoRepository<TransactionDTO, String> {
+interface WalletRepository: MongoRepository<Transaction, String> {
     fun getTransactionByBuyerID(buyerID:String)
 }
