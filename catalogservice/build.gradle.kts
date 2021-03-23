@@ -22,6 +22,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.apache.kafka:kafka-streams")
+    implementation("org.springframework.kafka:spring-kafka")
     implementation( project(":commons"))
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     compileOnly( "org.mapstruct:mapstruct:1.4.2.Final")

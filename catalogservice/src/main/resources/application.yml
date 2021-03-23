@@ -7,3 +7,5 @@ application:
   urlOrderService: "localhost:8081"
   urlWalletService: "localhost:8082"
   urlWarehouseService: "localhost:8083"
+
+

@@ -7,10 +7,7 @@ import org.bson.types.ObjectId
 import org.mapstruct.factory.Mappers
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
 
@@ -34,6 +31,11 @@ class ProductController (
             return mapper.toDto(p.get())
         else
             throw ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/test")
+    fun produceEventTest(@RequestBody product: ProductDTO){
+        productService.produceTestEvent(product)
     }
 
 
