@@ -14,6 +14,7 @@ class Order(
     @Id var id: String? = ObjectId.get().toString(),
     @CreatedDate var createdDate: LocalDateTime? = null,
     @LastModifiedDate var modifiedDate: LocalDateTime? = null,
+    var transactionId: String? = null,
     var prodList: MutableMap<String, Int> = mutableMapOf<String, Int>(),
     var wHRecord: MutableMap<String, MutableMap<String, Int>> = mutableMapOf<String, MutableMap<String, Int>>(),
     var buyer: String? = null,
