@@ -5,28 +5,68 @@ import com.ecomm.commons.OrderStatus
 import com.ecomm.orderservice.dto.OrderDTO
 import com.ecomm.orderservice.dto.OrderMapper
 import com.ecomm.orderservice.repo.OrderRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.util.JSONPObject
+import com.fasterxml.jackson.databind.util.StdDateFormat
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.mapstruct.factory.Mappers
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.*
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.beans.factory.annotation.Autowired
+import java.io.IOException
+
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.handler.annotation.Header
+import org.springframework.messaging.handler.annotation.Payload
+
 
 @Service
 class OrderServiceImpl(private val orderRepository: OrderRepository): OrderService {
 
-    private val mapper = Mappers.getMapper(OrderMapper::class.java);
+    private val mapper = Mappers.getMapper(OrderMapper::class.java)
+    private val TOPIC = "status"
+    private val KEY_ORDER_CREATED = "ordercreated"
+    private val KEY_ORDER_PAID = "orderpaid"
+    private val KEY_ORDER_CANCELED = "ordercanceled"
+
+
+    @Autowired
+    lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
+
 
     fun createFakeOrder(dto: OrderDTO): Order {
 
-        return orderRepository.insert(mapper.toModel(OrderDTO(
+        val order = orderRepository.insert(mapper.toModel(OrderDTO(
             id = dto.id,
             buyer = dto.buyer,
             prodList = dto.prodList,
             prodPrice = dto.prodPrice,
             amount = dto.amount,
-            status = dto.status,
+            status = OrderStatus.Pending.toString(),
             modifiedDate = LocalDateTime.now(),
             createdDate = LocalDateTime.now()
         )))
+
+        this.kafkaTemplate.send(TOPIC, KEY_ORDER_CREATED, mapper.toDto(order))
+
+        return order
+    }
+
+    @KafkaListener(topics = ["status"], groupId = "group_id")
+    @Throws(IOException::class)
+    fun consume(@Payload message: String, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        val jsonMapper = ObjectMapper()
+        jsonMapper.registerModule(JavaTimeModule())
+        print(key)
+        val order = jsonMapper.readValue(message, OrderDTO::class.java)
+
+        print(order.toString())
     }
 
     fun getOrders(): List<Order> {
