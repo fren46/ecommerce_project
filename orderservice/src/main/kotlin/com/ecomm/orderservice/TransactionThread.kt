@@ -15,9 +15,9 @@ class TransactionThread( val repo: OrderRepository) {
     @Scheduled(fixedRate = 10000)
     @Throws(InterruptedException::class)
     fun scheduleFixedRateTaskAsync() {
-        val a = repo.findAllByStatusOrderByModifiedDateAsc(OrderStatus.Pending)
-        if (a.isEmpty())
-            return
-        println(a)
+        //val a = repo.findAllByStatusOrderByModifiedDateAsc(OrderStatus.Pending)
+        //if (a.isEmpty())
+        //    return
+        //println(a)
     }
 }
