@@ -19,7 +19,7 @@ class ProductController (
 
     private val mapper = Mappers.getMapper(ProductMapper::class.java);
 
-    @GetMapping("/")
+    @GetMapping("")
     fun getProducts():List<ProductDTO>{
         return productService.getProducts().map { product -> mapper.toDto(product) }
     }
