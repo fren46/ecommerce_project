@@ -4,6 +4,7 @@ import com.ecomm.commons.Transaction
 import com.ecomm.walletservice.dto.TransactionDTO
 import com.ecomm.walletservice.service.WalletServiceImpl
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 
 @RestController
 class WalletController (val walletService: WalletServiceImpl) {

@@ -1,7 +1,6 @@
 package com.ecomm.walletservice.service
 import com.ecomm.commons.OrderDTO
 import com.ecomm.commons.Transaction
-import com.ecomm.walletervice.dto.TransactionMapper
 import com.ecomm.walletservice.dto.TransactionDTO
 import com.ecomm.walletservice.repository.WalletRepository
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -16,27 +15,35 @@ import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
 import java.io.IOException
 import java.time.LocalDateTime
-import kotlin.math.round
 
+@org.mapstruct.Mapper
+interface  TransactionMapper {
+    //@Mapping(source = "field", target = "field2")
+    fun toDto(transaction: Transaction): TransactionDTO
+    fun toModel(transactionDTO: TransactionDTO): Transaction
+    //fun toDtos(orders: List<Order>): List<OrderDTO>
+}
 
 @Service
 class WalletServiceImpl(private val repo:WalletRepository): WalletService {
 
-    private val mapper = Mappers.getMapper(TransactionMapper::class.java)
-
     private val TOPIC = "status"
     private val KEY_ORDER_CREATED = "order created"
+    private val KEY_ORDER_VERIFIED = "order available"
+    private val KEY_ORDER_FAILED = "order failed"
     private val KEY_ORDER_PAID = "order paid"
     private val KEY_ORDER_CANCELED = "order canceled"
 
+
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
+    private val mapper = Mappers.getMapper(TransactionMapper::class.java)
 
     override fun getAmount(id: String): Double? {
         val transactionList = repo.getTransactionByBuyerID(id)
         val amountList = mutableListOf<Double>()
         transactionList.forEach { amountList.add(it.amount!!) }
-        return amountList.sum()
+        return Math.round(amountList.sum() * 100) / 100.0
     }
 
     override fun getTransaction(id: String): List<Transaction>? {
@@ -44,7 +51,9 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     }
 
     override fun addTransaction(transactionDTO: TransactionDTO): String {
+
         val transaction = mapper.toModel(transactionDTO)
+        transaction.created= LocalDateTime.now()
         repo.save(transaction)
         return transaction.id!!
     }
@@ -56,22 +65,29 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
         jsonMapper.registerModule(JavaTimeModule())
         print(key)
         val order = jsonMapper.readValue(message, OrderDTO::class.java)
-        if(key==KEY_ORDER_CREATED && order.wHRecord != emptyMap<String, Int>()) {
-            val transaction = Transaction(
-                buyerID = order.buyer,
-                amount = -order.amount!!.toDouble(), //The transaction has a negative amount then buying
-                created = LocalDateTime.now(),
-                orderID = order.id
-            )
-            repo.save(transaction)
-            println("Transaction " + transaction.id + " added")
-            order.transactionId = transaction.id
-            this.kafkaTemplate.send(TOPIC, KEY_ORDER_PAID, order)
+        if(key==KEY_ORDER_VERIFIED && order.wHRecord != emptyMap<String, Int>()) {
+            if (order.amount!! >= getAmount(order.buyer!!)!!) {
+                val transaction = Transaction(
+                    buyerID = order.buyer,
+                    amount = Math.round((order.amount!!).toDouble() * 100) / 100.0, //The transaction has a negative amount then buying
+                    created = LocalDateTime.now(),
+                    orderID = order.id
+                )
+                repo.save(transaction)
+                println("Transaction " + transaction.id + " added")
+                order.transactionId = transaction.id
+                this.kafkaTemplate.send(TOPIC, KEY_ORDER_PAID, order)
+            }
+
+            else {
+
+                this.kafkaTemplate.send(TOPIC, KEY_ORDER_FAILED, order)
+            }
         }
         else if (key==KEY_ORDER_CANCELED) {
             val transaction = Transaction(
                 buyerID = order.buyer,
-                amount = -order.amount!!.toDouble(),
+                amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
                 created = LocalDateTime.now(),
                 orderID = order.id
             )

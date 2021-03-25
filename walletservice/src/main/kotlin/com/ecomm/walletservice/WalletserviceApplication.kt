@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
                     val config = mapOf(
                         ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092")
                     val consumerFactory = DefaultKafkaConsumerFactory(
-                        config, StringDeserializer(), JsonDeserializer(OrderDTO::class.java)
+                        config, StringDeserializer(), JsonDeserializer(OrderDTO::class.java, true)
                     )
                     val factory = ConcurrentKafkaListenerContainerFactory<String,
                             OrderDTO>()
