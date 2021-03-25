@@ -39,10 +39,12 @@ fun main(args: Array<String>) {
                 }
                 bean("ProductJsonListener"){
                     val config = mapOf(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092")
+                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092"
+                    )
                     val consumerFactory = DefaultKafkaConsumerFactory(
                         config, StringDeserializer(), JsonDeserializer(ProductDTO::class.java)
                     )
+
                     val factory = ConcurrentKafkaListenerContainerFactory<String,
                             ProductDTO>()
                     factory.consumerFactory = consumerFactory;
