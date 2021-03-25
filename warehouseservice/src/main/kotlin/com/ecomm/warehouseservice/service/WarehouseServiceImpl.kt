@@ -36,18 +36,42 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         warehouseList.forEach{warehouse -> var count=0; if(warehouse.name==warehouseID) {
             warehouse.stocks.forEach{it->if(it.productId==item.productId) {
                 it.quantity+=item.quantity
-                warehouse.name?.let { it1 -> repo.deleteById(it1) }
                 repo.save(warehouse)
                 return item.productId + " updated"
                 }
                 count+=1}
         if(count==warehouse.stocks.size){
             warehouse.stocks.add(item)
-            warehouse.name?.let { it1 -> repo.deleteById(it1) }
             repo.save(warehouse)
             return item.productId + " added"
         } } }
         return "Warehouse not present"
     }
 
+    override fun consumeProduct(id: String, n: Int): Map<String,Int>? {
+        if(getProductAvailability(id)!!.quantity>=n){
+            var quantity=n
+            val map= mutableMapOf<String,Int>()
+            val warehouseList = repo.findAll()
+            warehouseList.forEach{warehouse-> warehouse.stocks.forEach { item ->
+                if (item.productId == id) {
+                    if (item.quantity >= quantity) {
+                        item.quantity -= quantity
+                        map.put(warehouse.id, quantity)
+                        repo.save(warehouse)
+                        return map
+                    }
+                    if (item.quantity < quantity && item.quantity!=0){
+                        map.put(warehouse.id, item.quantity)
+                        quantity-=item.quantity
+                        item.quantity=0
+                        repo.save(warehouse)
+                    }
+                    }
+                }
+            }
+
+        }
+        return null
+    }
 }

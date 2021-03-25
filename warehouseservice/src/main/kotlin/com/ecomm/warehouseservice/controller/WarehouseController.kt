@@ -14,8 +14,8 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
     }
 
     @GetMapping("/product/{id}/consume/{n}")
-    fun consumeProduct(@PathVariable id: String, @PathVariable n: Int): String {
-        return n.toString() //warehouseService.
+    fun consumeProduct(@PathVariable id: String, @PathVariable n: Int): Map<String,Int>? {
+        return warehouseService.consumeProduct(id,n)
     }
 
     @GetMapping("/warehouse")
@@ -25,7 +25,6 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
 
     @PostMapping("/product/{warehouseId}")
     fun addProductInWarehouse(@RequestBody t: WarehouseItem,@PathVariable warehouseId: String): String {
-        println(t.productId)
         return warehouseService.addProductInWarehouse(warehouseId,t)
     }
 
