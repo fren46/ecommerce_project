@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 @Document
 class Transaction(
     @Id
-    var id: String? = ObjectId.get().toString(),
+    var id: String? = ObjectId.get().toHexString(),
     val buyerID: String?=null,
     val orderID: String?=null,
     val amount: Double?=null,

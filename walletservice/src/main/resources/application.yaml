@@ -1,0 +1,10 @@
+server:
+  port: 8082
+  portCatalogService: 8080
+  portOrderService: 8081
+  portWarehouseService: 8083
+
+application:
+  urlCatalogService: "localhost:8080"
+  urlOrderService: "localhost:8081"
+  urlWarehouseService: "localhost:8083"

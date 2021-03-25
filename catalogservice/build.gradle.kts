@@ -24,6 +24,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.apache.kafka:kafka-streams")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation ("io.springfox:springfox-boot-starter:3.0.0")
     implementation( project(":commons"))
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     compileOnly( "org.mapstruct:mapstruct:1.4.2.Final")
