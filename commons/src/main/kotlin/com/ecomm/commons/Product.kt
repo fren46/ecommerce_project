@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 class Product(
     @Id
-    val id: ObjectId = ObjectId.get(),
+    val id: String? = ObjectId.get().toHexString(),
     val name: String,
     val description: String,
     val picture: String,

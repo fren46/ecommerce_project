@@ -4,18 +4,17 @@ import com.ecomm.commons.Transaction
 import com.ecomm.walletservice.dto.TransactionDTO
 import com.ecomm.walletservice.service.WalletServiceImpl
 import org.springframework.web.bind.annotation.*
-import java.math.BigDecimal
 
 @RestController
 class WalletController (val walletService: WalletServiceImpl) {
 
     @GetMapping("/{id}/wallet")
-    fun getAmount(@PathVariable id:String): Double?{
+    fun getAmount(@PathVariable id:String): Double{
         return walletService.getAmount(id)
     }
 
     @GetMapping("/{id}/transaction")
-    fun getTransaction(@PathVariable id:String): List<Transaction>?{
+    fun getTransaction(@PathVariable id:String): List<Transaction>{
         return walletService.getTransaction(id)
     }
 

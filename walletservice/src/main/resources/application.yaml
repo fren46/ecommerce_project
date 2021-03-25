@@ -8,3 +8,27 @@ application:
   urlCatalogService: "localhost:8080"
   urlOrderService: "localhost:8081"
   urlWarehouseService: "localhost:8083"
+
+spring:
+   kafka:
+     consumer:
+       bootstrap-servers: "localhost:9092"
+       auto-offset-reset: "earliest"
+       key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+       value-deserializer: "org.springframework.kafka.support.serializer.JsonDeserializer"
+       properties:
+         spring:
+           json:
+             trusted:
+               packages: "*"
+
+     producer:
+       bootstrap-servers: "localhost:9092"
+       auto-offset-reset: "earliest"
+       key-deserializer: "org.apache.kafka.common.serialization.StringDeserializer"
+       value-deserializer: "org.springframework.kafka.support.serializer.JsonDeserializer"
+       properties:
+         spring:
+           json:
+             trusted:
+               packages: "*"
