@@ -1,5 +1,6 @@
 package com.ecomm.orderservice.service
 
+import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.Order
 import com.ecomm.commons.OrderStatus
 import com.ecomm.orderservice.dto.OrderDTO
@@ -22,6 +23,7 @@ import java.io.IOException
 
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 
@@ -31,9 +33,6 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     private val mapper = Mappers.getMapper(OrderMapper::class.java)
     private val TOPIC = "status"
-    private val KEY_ORDER_CREATED = "ordercreated"
-    private val KEY_ORDER_PAID = "orderpaid"
-    private val KEY_ORDER_CANCELED = "ordercanceled"
 
 
     @Autowired
@@ -42,29 +41,52 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     fun createFakeOrder(dto: OrderDTO): Order {
 
-        val order = orderRepository.insert(mapper.toModel(OrderDTO(
-            id = dto.id,
-            buyer = dto.buyer,
-            prodList = dto.prodList,
-            prodPrice = dto.prodPrice,
-            amount = dto.amount,
-            status = OrderStatus.Pending.toString(),
-            modifiedDate = LocalDateTime.now(),
-            createdDate = LocalDateTime.now()
-        )))
-
-        this.kafkaTemplate.send(TOPIC, KEY_ORDER_CREATED, mapper.toDto(order))
+        val order = orderRepository.insert(
+            mapper.toModel(
+                OrderDTO(
+                    id = dto.id,
+                    buyer = dto.buyer,
+                    prodList = dto.prodList,
+                    prodPrice = dto.prodPrice,
+                    amount = dto.amount,
+                    status = OrderStatus.Pending.toString(),
+                    modifiedDate = LocalDateTime.now(),
+                    createdDate = LocalDateTime.now()
+                )
+            )
+        )
+        this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
 
         return order
     }
 
     @KafkaListener(topics = ["status"], groupId = "group_id")
     @Throws(IOException::class)
-    fun consume(@Payload message: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
-        if(key == KEY_ORDER_PAID)
-            TODO("The order is paid, modify its status and update it into the DB")
-        else if(key == KEY_ORDER_CANCELED)
-            TODO("The order is canceled, modify its status into the DB. All the other services will receive the info and will perform the rollbacks")
+    fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        if (key == KafkaKeys.KEY_ORDER_PAID.value) {
+            val saved = orderRepository.save(mapper.toModel(
+                OrderDTO(
+                    id = dto.id,
+                    buyer = dto.buyer,
+                    transactionId = dto.transactionId,
+                    whrecord = dto.whrecord,
+                    prodList = dto.prodList,
+                    prodPrice = dto.prodPrice,
+                    amount = dto.amount,
+                    status = "Paid",
+                    modifiedDate = LocalDateTime.now(),
+                    createdDate = dto.createdDate
+            )
+            ))
+            val converted = mapper.toDto(saved)
+            println("PAID: $converted")
+        }
+        else if (key == KafkaKeys.KEY_ORDER_CANCELED.value)
+            println("CANCELED: $dto")
+        else if (key == KafkaKeys.KEY_ORDER_CREATED.value)
+            println("CREATED: $dto")
+        else if (key == KafkaKeys.KEY_ORDER_AVAILABLE.value)
+            println("AVAILABLE: $dto")
     }
 
     fun getOrders(): List<Order> {
@@ -85,7 +107,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     override fun cancelOrder(id: String): Boolean {
         val order = orderRepository.findById(id)
-        return if(order.isPresent && order.get().status == OrderStatus.Pending) {
+        return if (order.isPresent && order.get().status == OrderStatus.Pending) {
             orderRepository.deleteById(id)
             true
         } else
@@ -109,6 +131,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                             OrderDTO(
                                 id = dto.id,
                                 buyer = dto.buyer ?: order.get().buyer,
+                                transactionId = dto.transactionId ?: order.get().transactionId,
+                                whrecord = if (dto.whrecord.isEmpty()) order.get().whrecord else dto.whrecord,
                                 prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
                                 prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
                                 amount = dto.amount ?: order.get().amount,
@@ -126,22 +150,27 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                             OrderDTO(
                                 id = order.get().id,
                                 buyer = order.get().buyer,
+                                transactionId = order.get().transactionId,
+                                whrecord = order.get().whrecord,
                                 prodList = order.get().prodList,
                                 prodPrice = order.get().prodPrice,
                                 amount = order.get().amount,
                                 status = dto.status ?: order.get().status.toString(),
-                                modifiedDate = if(dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
+                                modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
                                 createdDate = order.get().createdDate
                             )
                         )
                     )
+                    if (onlyStatus.status == OrderStatus.Canceled) {
+                        this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(onlyStatus))
+                    }
                     val opt = Optional.of(onlyStatus)
                     return opt
                 } else
                     return order
             } else
-                return order
-        } else
-            return order as Optional<Order>
+                return order as Optional<Order>
+        }
+        return order as Optional<Order>
     }
 }
