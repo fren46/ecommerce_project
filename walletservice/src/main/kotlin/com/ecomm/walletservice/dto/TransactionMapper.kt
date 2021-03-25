@@ -1,7 +1,6 @@
-package com.ecomm.walletervice.dto
+package com.ecomm.walletservice.dto
 
 import com.ecomm.commons.Transaction
-import com.ecomm.walletservice.dto.TransactionDTO
 
 @org.mapstruct.Mapper
 interface  TransactionMapper {
@@ -10,3 +9,4 @@ interface  TransactionMapper {
     fun toModel(transactionDTO: TransactionDTO): Transaction
     //fun toDtos(orders: List<Order>): List<OrderDTO>
 }
+

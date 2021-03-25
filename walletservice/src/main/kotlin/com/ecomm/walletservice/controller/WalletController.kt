@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.*
 class WalletController (val walletService: WalletServiceImpl) {
 
     @GetMapping("/{id}/wallet")
-    fun getAmount(@PathVariable id:String): Double?{
+    fun getAmount(@PathVariable id:String): Double{
         return walletService.getAmount(id)
     }
 
     @GetMapping("/{id}/transaction")
-    fun getTransaction(@PathVariable id:String): List<Transaction>?{
+    fun getTransaction(@PathVariable id:String): List<Transaction>{
         return walletService.getTransaction(id)
     }
 
