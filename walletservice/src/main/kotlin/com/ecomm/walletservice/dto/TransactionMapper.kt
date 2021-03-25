@@ -7,6 +7,6 @@ import com.ecomm.walletservice.dto.TransactionDTO
 interface  TransactionMapper {
     //@Mapping(source = "field", target = "field2")
     fun toDto(transaction: Transaction): TransactionDTO
-    fun toModel(orderDto: TransactionDTO): Transaction
+    fun toModel(transactionDTO: TransactionDTO): Transaction
     //fun toDtos(orders: List<Order>): List<OrderDTO>
 }
