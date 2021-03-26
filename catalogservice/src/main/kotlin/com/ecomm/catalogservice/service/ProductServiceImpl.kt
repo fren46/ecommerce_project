@@ -39,19 +39,42 @@ class ProductServiceImpl(
         return productRepository.findAll()
     }
 
-    override fun getProduct(id: ObjectId): Optional<Product> {
+    override fun getProduct(id: String): Optional<Product> {
         return productRepository.findById(id)
     }
 
     override fun addProduct(product: ProductDTO): Product{
-        if ( productRepository.getProductByNameAndCategoryAndPrice(product.name, product.category, product.price) != null)
+        if ( productRepository.getProductByNameAndCategoryAndPrice(product.name!!, product.category!!, product.price!!) != null)
             throw ProductAlreadyExistsException("Product with name ${product.name} already exists")
         try {
             return productRepository.save(mapper.toModel(product))
         }catch (ex: IllegalArgumentException){
             throw BadRequestException("Illegal argument")
         }
+    }
 
+    override fun modifyProduct(id: String, newProduct: ProductDTO): Optional<Product> {
+        try {
+            return productRepository.findById(id)
+                .map { product ->
+                    product.name = if (newProduct.name != null) newProduct.name else product.name
+                    product.category = if(newProduct.category != null) newProduct.category else product.category
+                    product.description = if(newProduct.description != null) newProduct.description else product.description
+                    product.price = if(newProduct.price != null) newProduct.price else product.price
+                    product.picture = if(newProduct.picture != null) newProduct.picture else product.picture
+                    productRepository.save(product)
+                }
+        }catch (ex: IllegalArgumentException){
+            throw BadRequestException("Illegal argument")
+        }
+    }
+
+    override fun deleteProduct(id: String): Optional<Product> {
+        try {
+            return productRepository.deleteProductById(id)
+        }catch (ex: IllegalArgumentException){
+            throw BadRequestException("Illegal argument")
+        }
     }
 
     fun produceTestEvent(product: ProductDTO){

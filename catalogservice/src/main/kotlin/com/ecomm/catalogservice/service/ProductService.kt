@@ -7,7 +7,8 @@ import java.util.*
 
 interface ProductService {
     fun getProducts(): List<Product>
-    fun getProduct(id: ObjectId): Optional<Product>
+    fun getProduct(id: String): Optional<Product>
     fun addProduct(product: ProductDTO): Product
-
+    fun modifyProduct(id: String, newProduct: ProductDTO): Optional<Product>
+    fun deleteProduct(id: String): Optional<Product>
 }
