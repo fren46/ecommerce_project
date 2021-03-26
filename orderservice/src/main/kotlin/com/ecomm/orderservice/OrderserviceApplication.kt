@@ -1,6 +1,6 @@
 package com.ecomm.orderservice
 
-import com.ecomm.orderservice.dto.OrderDTO
+import com.ecomm.commons.OrderDTO
 import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.bytebuddy.jar.asm.TypeReference
@@ -23,6 +23,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer
 class OrderserviceApplication
 
 fun main(args: Array<String>) {
+
     runApplication<OrderserviceApplication>(*args)
         /*addInitializers(
             beans {

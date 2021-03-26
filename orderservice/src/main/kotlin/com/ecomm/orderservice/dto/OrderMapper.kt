@@ -1,6 +1,7 @@
 package com.ecomm.orderservice.dto
 
 import com.ecomm.commons.Order
+import com.ecomm.commons.OrderDTO
 
 
 @org.mapstruct.Mapper

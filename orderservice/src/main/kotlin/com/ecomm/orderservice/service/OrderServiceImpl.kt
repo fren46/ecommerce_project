@@ -1,18 +1,8 @@
 package com.ecomm.orderservice.service
 
-import com.ecomm.commons.KafkaKeys
-import com.ecomm.commons.Order
-import com.ecomm.commons.OrderStatus
-import com.ecomm.orderservice.dto.OrderDTO
+import com.ecomm.commons.*
 import com.ecomm.orderservice.dto.OrderMapper
 import com.ecomm.orderservice.repo.OrderRepository
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.util.JSONPObject
-import com.fasterxml.jackson.databind.util.StdDateFormat
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.mapstruct.factory.Mappers
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -23,16 +13,15 @@ import java.io.IOException
 
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
-import org.springframework.messaging.MessageHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
+import kotlin.reflect.typeOf
 
 
 @Service
 class OrderServiceImpl(private val orderRepository: OrderRepository): OrderService {
 
     private val mapper = Mappers.getMapper(OrderMapper::class.java)
-    private val TOPIC = "status"
 
 
     @Autowired
@@ -41,7 +30,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     fun createFakeOrder(dto: OrderDTO): Order {
 
-        val order = orderRepository.insert(
+        val order = orderRepository.save(
             mapper.toModel(
                 OrderDTO(
                     id = dto.id,
@@ -55,7 +44,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
             )
         )
-        this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
+        println(mapper.toDto(order).javaClass.typeName.toString())
+        this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
 
         return order
     }
@@ -64,29 +54,41 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     @Throws(IOException::class)
     fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_ORDER_PAID.value) {
-            val saved = orderRepository.save(mapper.toModel(
-                OrderDTO(
-                    id = dto.id,
-                    buyer = dto.buyer,
-                    transactionId = dto.transactionId,
-                    whrecord = dto.whrecord,
-                    prodList = dto.prodList,
-                    prodPrice = dto.prodPrice,
-                    amount = dto.amount,
-                    status = "Paid",
-                    modifiedDate = LocalDateTime.now(),
-                    createdDate = dto.createdDate
-            )
-            ))
-            val converted = mapper.toDto(saved)
-            println("PAID: $converted")
+            val order = dto.id?.let { orderRepository.findById(it) }
+            if (order != null) {
+                val saved = orderRepository.save(
+                    mapper.toModel(
+                        OrderDTO(
+                            id = dto.id,
+                            buyer = dto.buyer ?: order.get().buyer,
+                            transactionId = dto.transactionId ?: order.get().transactionId,
+                            whrecord = if (dto.whrecord.isEmpty()) order.get().whrecord else dto.whrecord,
+                            prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
+                            prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
+                            amount = dto.amount ?: order.get().amount,
+                            status = "Paid",
+                            modifiedDate = LocalDateTime.now(),
+                            createdDate = order.get().createdDate
+                        )
+                    )
+                )
+                val converted = mapper.toDto(saved)
+                println("PAID: $converted")
+                return
+            }
         }
-        else if (key == KafkaKeys.KEY_ORDER_CANCELED.value)
+        else if (key == KafkaKeys.KEY_ORDER_CANCELED.value) {
             println("CANCELED: $dto")
-        else if (key == KafkaKeys.KEY_ORDER_CREATED.value)
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_CREATED.value) {
             println("CREATED: $dto")
-        else if (key == KafkaKeys.KEY_ORDER_AVAILABLE.value)
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_AVAILABLE.value) {
             println("AVAILABLE: $dto")
+            return
+        }
     }
 
     fun getOrders(): List<Order> {
@@ -162,7 +164,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                         )
                     )
                     if (onlyStatus.status == OrderStatus.Canceled) {
-                        this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(onlyStatus))
+                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(onlyStatus))
                     }
                     val opt = Optional.of(onlyStatus)
                     return opt

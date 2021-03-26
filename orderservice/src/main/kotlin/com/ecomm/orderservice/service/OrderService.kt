@@ -1,7 +1,7 @@
 package com.ecomm.orderservice.service
 
 import com.ecomm.commons.Order
-import com.ecomm.orderservice.dto.OrderDTO
+import com.ecomm.commons.OrderDTO
 import java.util.*
 
 interface OrderService {

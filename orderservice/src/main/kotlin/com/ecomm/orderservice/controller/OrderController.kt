@@ -1,7 +1,7 @@
 package com.ecomm.orderservice.controller
 
-import com.ecomm.orderservice.dto.OrderDTO
 import com.ecomm.orderservice.dto.OrderMapper
+import com.ecomm.commons.OrderDTO
 import com.ecomm.orderservice.service.OrderServiceImpl
 import org.mapstruct.factory.Mappers
 import org.springframework.http.HttpStatus

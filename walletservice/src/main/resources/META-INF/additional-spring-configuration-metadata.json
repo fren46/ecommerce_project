@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "application.urlWarehouseService",
+      "type": "java.lang.String",
+      "description": "Hostane and port of the microservice"
+  }
+] }
