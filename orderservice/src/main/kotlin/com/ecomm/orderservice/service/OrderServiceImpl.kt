@@ -15,6 +15,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.transaction.annotation.Transactional
 import kotlin.reflect.typeOf
 
 
@@ -44,7 +45,6 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
             )
         )
-        println(mapper.toDto(order).javaClass.typeName.toString())
         this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
 
         return order
@@ -52,6 +52,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
 
     @KafkaListener(topics = ["status"], groupId = "group_id")
     @Throws(IOException::class)
+    @Transactional
     fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_ORDER_PAID.value) {
             val order = dto.id?.let { orderRepository.findById(it) }
@@ -116,6 +117,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
             false
     }
 
+    @Transactional
     override fun modifyOrder(dto: OrderDTO): Optional<Order> {
         /* For testing purposes
         val orders = dto.status?.let { orderRepository.findAllByStatus(it) }
@@ -171,7 +173,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 } else
                     return order
             } else
-                return order as Optional<Order>
+                return order
         }
         return order as Optional<Order>
     }
