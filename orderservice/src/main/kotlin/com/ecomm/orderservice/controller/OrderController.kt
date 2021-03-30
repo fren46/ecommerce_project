@@ -20,8 +20,8 @@ class OrderController(
 
 
     @PostMapping
-    fun createFakeOrder(@RequestBody orderDto: OrderDTO): OrderDTO? {
-        val p = orderServiceImpl.createFakeOrder(orderDto);
+    fun createOrder(@RequestBody orderDto: OrderDTO): OrderDTO? {
+        val p = orderServiceImpl.createOrder(orderDto);
         return mapper.toDto(p)
     }
 

@@ -28,7 +28,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
 
-    fun createFakeOrder(dto: OrderDTO): Order {
+    override fun createOrder(dto: OrderDTO): Order {
 
         val order = orderRepository.save(
             mapper.toModel(
@@ -144,14 +144,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
         return orderRepository.findAll()
     }
 
-    override fun createOrder(dto: OrderDTO): Order {
-        //TODO Implement correctly the transaction order by consulting the endpoints of wallet and warehouse.
-
-        return orderRepository.save(mapper.toModel(dto))
-    }
-
     override fun getOrder(id: String): Optional<Order> {
-        println("===> ${id}")
+        println("Requested => ${id}")
         return orderRepository.findById(id)
     }
 
