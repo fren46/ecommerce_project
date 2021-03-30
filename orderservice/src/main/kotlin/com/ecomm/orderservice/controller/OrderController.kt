@@ -18,43 +18,43 @@ class OrderController(
     private val mapper = Mappers.getMapper(OrderMapper::class.java);
 
     @PostMapping
-    fun createFakeOrder(@RequestBody orderDto: OrderDTO): ResponseEntity<OrderDTO> {
+    fun createFakeOrder(@RequestBody orderDto: OrderDTO): OrderDTO? {
         val p = orderServiceImpl.createFakeOrder(orderDto);
-        return ResponseEntity.ok(mapper.toDto(p));
+        return mapper.toDto(p)
     }
 
     @GetMapping()
-    fun getOrders(): ResponseEntity<List<OrderDTO>> {
+    fun getOrders(): List<OrderDTO> {
 
-        return ResponseEntity.ok(mapper.toDtos(orderServiceImpl.getOrders()))
+        return mapper.toDtos(orderServiceImpl.getOrders())
     }
 
     @GetMapping("/{id}")
-    fun getOrder(@PathVariable id: String): OrderDTO {
+    fun getOrder(@PathVariable id: String): OrderDTO? {
         val p = orderServiceImpl.getOrder(id);
-        if(p.isPresent)
-            return mapper.toDto(p.get())
+        return if(p.isPresent)
+            mapper.toDto(p.get())
         else
-            throw ResponseStatusException(HttpStatus.NOT_FOUND);
+            null
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOrder(@PathVariable id: String): String {
+    fun deleteOrder(@PathVariable id: String): String? {
         val result = orderServiceImpl.cancelOrder(id)
         if(result)
             return id
         else
-            throw ResponseStatusException(HttpStatus.NOT_FOUND);
+            return null
 
     }
 
     @PutMapping()
-    fun modifyOrder(@RequestBody order: OrderDTO): OrderDTO {
+    fun modifyOrder(@RequestBody order: OrderDTO): OrderDTO? {
         val res = orderServiceImpl.modifyOrder(order)
         if(res.isPresent)
             return mapper.toDto(res.get())
         else
-            throw ResponseStatusException(HttpStatus.NOT_FOUND);
+            return null
     }
     /*@GetMapping("/open/{id}")
     fun getProductOpen(@PathVariable id: ObjectId): ResponseEntity<OrderDTO> {
