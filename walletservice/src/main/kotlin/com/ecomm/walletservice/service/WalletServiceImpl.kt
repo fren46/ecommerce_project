@@ -52,7 +52,7 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
         return transaction.id!!
     }
 
-    @KafkaListener(topics = ["status"], groupId = "group_id")
+    @KafkaListener(topics = ["status"], groupId = "wallet")
     @Throws(IOException::class)
     fun consume(@Payload order: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if(key==KafkaKeys.KEY_ORDER_AVAILABLE.value) {

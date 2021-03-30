@@ -83,7 +83,7 @@ class ProductServiceImpl(
 
     @KafkaListener(
         topics = ["test"],
-        groupId = "group_id",
+        groupId = "catalog",
         containerFactory = "ProductJsonListener")
     fun consumeTestEvent(product: ProductDTO){
         print(product)

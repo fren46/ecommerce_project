@@ -49,7 +49,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
         return order
     }
 
-    @KafkaListener(topics = ["status"], groupId = "group_id")
+    @KafkaListener(topics = ["status"], groupId = "order")
     @Throws(IOException::class)
     @Transactional
     fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
@@ -162,7 +162,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     override fun modifyOrder(dto: OrderDTO): Optional<Order> {
         val order = dto.id?.let { orderRepository.findById(it) }
         if (order != null) {
-            if (OrderStatus.values().any { it.name != dto.status })
+            if (!OrderStatus.values().any { it.name != dto.status })
                 return order
             if (order.isPresent) {
                 if (order.get().status == OrderStatus.Pending) {

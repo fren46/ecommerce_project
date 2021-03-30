@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service
 @Service
 class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseService {
     private val mapper = Mappers.getMapper(WarehouseMapper::class.java)
+    /* TODO Aggiungere Kafka Listener con group_id settato a "warehouse" */
 
     override fun getProductAvailability(id:String):WarehouseItem? {
         val warehouseList = repo.findAll()
