@@ -44,7 +44,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
             )
         )
-        this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
+        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CREATED.value, mapper.toDto(order))
 
         return order
     }
@@ -54,6 +54,10 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     @Transactional
     fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_ORDER_PAID.value) {
+            if (dto.whrecord.isEmpty().or(dto.transactionId.isNullOrBlank())) {
+                this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_FAILED.value, dto)
+                return
+            }
             val order = dto.id?.let { orderRepository.findById(it) }
             if (order != null) {
                 val saved = orderRepository.save(
@@ -98,6 +102,30 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
                 val converted = mapper.toDto(saved)
                 println("CANCELED: $converted")
+                return
+            }
+        }
+        else if (key == KafkaKeys.KEY_ORDER_FAILED.value) {
+            val order = dto.id?.let { orderRepository.findById(it) }
+            if (order!!.isPresent) {
+                val saved = orderRepository.save(
+                    mapper.toModel(
+                        OrderDTO(
+                            id = order.get().id,
+                            buyer = order.get().buyer,
+                            transactionId = order.get().transactionId,
+                            whrecord = order.get().whrecord,
+                            prodList = order.get().prodList,
+                            prodPrice = order.get().prodPrice,
+                            amount = order.get().amount,
+                            status = OrderStatus.Failed.toString(),
+                            modifiedDate = LocalDateTime.now(),
+                            createdDate = order.get().createdDate
+                        )
+                    )
+                )
+                val converted = mapper.toDto(saved)
+                println("FAILED: $converted")
                 return
             }
         }
