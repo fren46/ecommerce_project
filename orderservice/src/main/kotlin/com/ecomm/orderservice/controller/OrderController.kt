@@ -41,10 +41,10 @@ class OrderController(
     @DeleteMapping("/{id}")
     fun deleteOrder(@PathVariable id: String): String? {
         val result = orderServiceImpl.cancelOrder(id)
-        if(result)
-            return id
+        return if(result)
+            id
         else
-            return null
+            null
 
     }
 

@@ -16,7 +16,6 @@ import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.transaction.annotation.Transactional
-import kotlin.reflect.typeOf
 
 
 @Service
@@ -67,7 +66,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                             prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
                             prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
                             amount = dto.amount ?: order.get().amount,
-                            status = "Paid",
+                            status = OrderStatus.Paid.toString(),
                             modifiedDate = LocalDateTime.now(),
                             createdDate = order.get().createdDate
                         )
@@ -79,8 +78,28 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
             }
         }
         else if (key == KafkaKeys.KEY_ORDER_CANCELED.value) {
-            println("CANCELED: $dto")
-            return
+            val order = dto.id?.let { orderRepository.findById(it) }
+            if (order!!.isPresent) {
+                val saved = orderRepository.save(
+                    mapper.toModel(
+                        OrderDTO(
+                            id = order.get().id,
+                            buyer = order.get().buyer,
+                            transactionId = order.get().transactionId,
+                            whrecord = order.get().whrecord,
+                            prodList = order.get().prodList,
+                            prodPrice = order.get().prodPrice,
+                            amount = order.get().amount,
+                            status = OrderStatus.Canceled.toString(),
+                            modifiedDate = LocalDateTime.now(),
+                            createdDate = order.get().createdDate
+                        )
+                    )
+                )
+                val converted = mapper.toDto(saved)
+                println("CANCELED: $converted")
+                return
+            }
         }
         else if (key == KafkaKeys.KEY_ORDER_CREATED.value) {
             println("CREATED: $dto")
@@ -108,32 +127,49 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
         return orderRepository.findById(id)
     }
 
+    @Transactional
     override fun cancelOrder(id: String): Boolean {
         val order = orderRepository.findById(id)
-        return if (order.isPresent && order.get().status == OrderStatus.Pending) {
-            orderRepository.deleteById(id)
+        return if (order.isPresent
+                .and((order.get().status == OrderStatus.Paid)
+                .or(order.get().status == OrderStatus.Pending))) {
+            val modified = orderRepository.save(
+                mapper.toModel(
+                    OrderDTO(
+                        id = order.get().id,
+                        buyer = order.get().buyer,
+                        transactionId = order.get().transactionId,
+                        whrecord = order.get().whrecord,
+                        prodList = order.get().prodList,
+                        prodPrice = order.get().prodPrice,
+                        amount = order.get().amount,
+                        status = OrderStatus.Canceled.toString(),
+                        modifiedDate = LocalDateTime.now(),
+                        createdDate = order.get().createdDate
+                    )
+                )
+            )
+            val result = this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(modified))
+
             true
         } else
             false
     }
 
+
+
     @Transactional
     override fun modifyOrder(dto: OrderDTO): Optional<Order> {
-        /* For testing purposes
-        val orders = dto.status?.let { orderRepository.findAllByStatus(it) }
-        if (orders != null) {
-            for (o in orders)
-                print("\n" + o.id + "\n")
-        }
-    */
         val order = dto.id?.let { orderRepository.findById(it) }
         if (order != null) {
+            if (OrderStatus.values().any { it.name != dto.status })
+                return order
             if (order.isPresent) {
                 if (order.get().status == OrderStatus.Pending) {
                     val modified = orderRepository.save(
                         mapper.toModel(
                             OrderDTO(
-                                id = dto.id,
+                                id = order.get().id,
                                 buyer = dto.buyer ?: order.get().buyer,
                                 transactionId = dto.transactionId ?: order.get().transactionId,
                                 whrecord = if (dto.whrecord.isEmpty()) order.get().whrecord else dto.whrecord,
@@ -148,7 +184,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                     )
                     val opt = Optional.of(modified)
                     return opt
-                } else if (order.get().status != OrderStatus.Canceled) {
+                } else if ((order.get().status != OrderStatus.Canceled).and(order.get().status != OrderStatus.Failed)) {
                     val onlyStatus = orderRepository.save(
                         mapper.toModel(
                             OrderDTO(
