@@ -100,6 +100,16 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         return "Warehouse not present"
     }
 
+
+    fun reStockProducts(whrecord: MutableMap<String, MutableMap<String,Int>>): Boolean {
+        whrecord.forEach { wh ->
+            wh.value.forEach { item ->
+                addProductInWarehouse(wh.key, WarehouseItem(item.key, item.value))
+            }
+        }
+        return true
+    }
+
     fun consumeProducts(products: MutableMap<String, Int>): MutableMap<String, MutableMap<String, Int>> {
 
         var whrecord = mutableMapOf<String,MutableMap<String, Int>>()
