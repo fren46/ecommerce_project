@@ -34,6 +34,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             return
         }
         else if (key == KafkaKeys.KEY_ORDER_FAILED.value) {
+            reStockProducts(dto.whrecord)
             println("FAILED: $dto")
             return
         }
