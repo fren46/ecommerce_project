@@ -1,17 +1,68 @@
 package com.ecomm.warehouseservice.service
-import com.ecomm.commons.WarehouseItem
-import com.ecomm.warehouseservice.dto.WarehouseDTO
+ import com.ecomm.commons.*
+ import com.ecomm.warehouseservice.dto.WarehouseDTO
 import com.ecomm.warehouseservice.dto.WarehouseMapper
 import com.ecomm.warehouseservice.repository.WarehouseRepository
 import org.mapstruct.factory.Mappers
-import org.springframework.stereotype.Service
+ import org.springframework.beans.factory.annotation.Autowired
+ import org.springframework.kafka.annotation.KafkaListener
+ import org.springframework.kafka.core.KafkaTemplate
+ import org.springframework.kafka.support.KafkaHeaders
+ import org.springframework.messaging.handler.annotation.Header
+ import org.springframework.messaging.handler.annotation.Payload
+ import org.springframework.stereotype.Service
+ import org.springframework.transaction.annotation.Transactional
+ import java.io.IOException
+ import java.time.LocalDateTime
 
 @Service
 class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseService {
     private val mapper = Mappers.getMapper(WarehouseMapper::class.java)
-    /* TODO Aggiungere Kafka Listener con group_id settato a "warehouse" */
+    @Autowired
+    lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
-    override fun getProductAvailability(id:String):WarehouseItem? {
+    @KafkaListener(topics = ["status"], groupId = "warehouse")
+    @Throws(IOException::class)
+    @Transactional
+    fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        if (key == KafkaKeys.KEY_ORDER_PAID.value) {
+            println("PAID: $dto")
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_CANCELED.value) {
+            println("CANCELED: $dto")
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_FAILED.value) {
+            println("FAILED: $dto")
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_CREATED.value) {
+            var temp = dto.copy(prodList = dto.prodList, whrecord = consumeProducts(dto.prodList))
+
+            if (temp.whrecord.isEmpty()) {
+                this.kafkaTemplate.send(
+                    KafkaChannels.TOPIC.value,
+                    KafkaKeys.KEY_ORDER_FAILED.value,
+                    temp)
+
+            }
+            else
+                this.kafkaTemplate.send(
+                    KafkaChannels.TOPIC.value,
+                    KafkaKeys.KEY_ORDER_AVAILABLE.value,
+                    temp)
+
+            println("CREATED: $dto")
+            return
+        }
+        else if (key == KafkaKeys.KEY_ORDER_AVAILABLE.value) {
+            println("AVAILABLE: $dto")
+            return
+        }
+    }
+
+    override fun getProductAvailability(id:String): WarehouseItem? {
         val warehouseList = repo.findAll()
         val productList = mutableListOf<WarehouseItem>()
         warehouseList.forEach { warehouse -> warehouse.stocks.forEach { it -> productList.add(it) } }
@@ -26,7 +77,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         finallist.forEach{if(it.productId==id) return it}
         return null
     }
-    override fun getWarehouseList():List<WarehouseDTO>?{
+    override fun getWarehouseList(): List<WarehouseDTO>? {
         val warehouseList= mutableListOf<WarehouseDTO>()
         repo.findAll().forEach{warehouse -> warehouseList.add(mapper.toDto(warehouse))}
         return warehouseList
@@ -39,18 +90,60 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                 it.quantity+=item.quantity
                 repo.save(warehouse)
                 return item.productId + " updated"
-                }
+            }
                 count+=1}
-        if(count==warehouse.stocks.size){
-            warehouse.stocks.add(item)
-            repo.save(warehouse)
-            return item.productId + " added"
-        } } }
+            if(count==warehouse.stocks.size){
+                warehouse.stocks.add(item)
+                repo.save(warehouse)
+                return item.productId + " added"
+            } } }
         return "Warehouse not present"
     }
 
+    fun consumeProducts(products: MutableMap<String, Int>): MutableMap<String, MutableMap<String, Int>> {
+
+        var whrecord = mutableMapOf<String,MutableMap<String, Int>>()
+        if(products.all { getProductAvailability(it.key)!!.quantity >= it.value }) {
+
+            val warehouseList = repo.findAll()
+            var prods = HashMap(products)
+            warehouseList.forEach{ wh ->
+
+                wh.stocks.forEach{ item ->
+
+                    if (item.productId in prods.keys) {
+                        //var quantity = products[item.productId]!!
+                        if(prods[item.productId]!! == 0) {
+                            println("is 0")
+                        }
+                        else if (item.quantity >= prods[item.productId]!!) {
+                            item.quantity -= prods[item.productId]!!
+                            println("$item")
+
+                            whrecord.putIfAbsent(wh.id, mutableMapOf())
+                            whrecord[wh.id]?.put(item.productId,prods[item.productId]!!)
+                            prods[item.productId] = 0
+                            repo.save(wh)
+                        }
+                        else if ((item.quantity < prods[item.productId]!!).and(item.quantity != 0)){
+                            whrecord.putIfAbsent(wh.id, mutableMapOf())
+                            whrecord[wh.id]?.put(item.productId,item.quantity)
+                            prods[item.productId] = prods[item.productId]!! - item.quantity
+                            item.quantity = 0
+                            repo.save(wh)
+                        }
+                    }
+                }
+            }
+        }
+
+        return whrecord
+
+    }
+
+
     override fun consumeProduct(id: String, n: Int): Map<String,Int>? {
-        if(getProductAvailability(id)!!.quantity>=n){
+        if(getProductAvailability(id)!!.quantity>=n) {
             var quantity=n
             val map= mutableMapOf<String,Int>()
             val warehouseList = repo.findAll()
@@ -68,8 +161,8 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                         item.quantity=0
                         repo.save(warehouse)
                     }
-                    }
                 }
+            }
             }
 
         }
