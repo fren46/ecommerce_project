@@ -46,8 +46,8 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
 
         val transaction = mapper.toModel(transactionDTO)
         transaction.created= LocalDateTime.now()
-        val orderDTO=OrderDTO(buyer = "ciao",amount = 4.57f,id = "cadnde")
-        this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_AVAILABLE.value, orderDTO)
+        //val orderDTO=OrderDTO(buyer = "ciao",amount = 4.57f,id = "cadnde")
+        //this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_AVAILABLE.value, orderDTO)
         repo.save(transaction)
         return transaction.id!!
     }
@@ -77,15 +77,25 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
             }
         }
         else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
-            val transactionDTO = TransactionDTO(
-                buyerID = order.buyer,
-                amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
-                created = LocalDateTime.now(),
-                orderID = order.id
-            )
+            val result = order.id?.let { repo.getTransactionByOrderID(it) }
+            if(result != null) {
+                if ((result.size > 1).or(result.size < 1)) {
+                    return
+                }
+                else  {
 
-            repo.save(mapper.toModel(transactionDTO))
-            println("Order " + order.id + " Refunded")
+                    val transactionDTO = TransactionDTO(
+                        buyerID = result[0].buyerID,
+                        amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
+                        created = LocalDateTime.now(),
+                        orderID = order.id
+                    )
+
+                    repo.save(mapper.toModel(transactionDTO))
+                    println("Order " + order.id + " Refunded")
+                }
+            }
+
         }
    }
 }
