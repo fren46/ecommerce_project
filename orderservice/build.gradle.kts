@@ -30,6 +30,7 @@ dependencies {
     implementation("org.apache.kafka:kafka-streams")
     implementation("org.springframework.kafka:spring-kafka")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     compileOnly("org.mapstruct:mapstruct:1.3.1.Final")

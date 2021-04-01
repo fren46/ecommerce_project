@@ -13,13 +13,15 @@ import java.io.IOException
 
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.mail.SimpleMailMessage
+import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.transaction.annotation.Transactional
 
 
 @Service
-class OrderServiceImpl(private val orderRepository: OrderRepository): OrderService {
+class OrderServiceImpl(private val orderRepository: OrderRepository, private val emailSender: JavaMailSender): OrderService {
 
     private val mapper = Mappers.getMapper(OrderMapper::class.java)
 
@@ -27,6 +29,18 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
+    fun sendEmail(
+        subject: String,
+        text: String,
+        targetEmail: String
+    ) {
+        val message = SimpleMailMessage()
+        message.setSubject(subject)
+        message.setText(text)
+        message.setTo(targetEmail)
+
+        emailSender.send(message)
+    }
 
     override fun createOrder(dto: OrderDTO): Order {
 
@@ -78,6 +92,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
                 val converted = mapper.toDto(saved)
                 println("PAID: $converted")
+                //sendEmail("[ECOMM][UPDATE] Your order is PAID", "Dear customer, \nYour order #${dto.id} is PAID", "ferrettinoluigi@gmail.com")
                 return
             }
         }
@@ -102,6 +117,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
                 val converted = mapper.toDto(saved)
                 println("CANCELED: $converted")
+                //sendEmail("[ECOMM][UPDATE] Your order is CANCELED", "Dear customer, \nYour order #${dto.id} is CANCELED. The refund is on its way.", "ferrettinoluigi@gmail.com")
                 return
             }
         }
@@ -126,6 +142,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                 )
                 val converted = mapper.toDto(saved)
                 println("FAILED: $converted")
+                //sendEmail("[ECOMM][UPDATE] Your order is FAILED", "Dear customer, \nYour order #${dto.id} is FAILE. You'll be refunded ASAP.", "ferrettinoluigi@gmail.com")
                 return
             }
         }
