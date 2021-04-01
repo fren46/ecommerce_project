@@ -45,9 +45,11 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     override fun addTransaction(transactionDTO: TransactionDTO): String {
 
         val transaction = mapper.toModel(transactionDTO)
-        transaction.created= LocalDateTime.now()
+        transaction.created = LocalDateTime.now()
         //val orderDTO=OrderDTO(buyer = "ciao",amount = 4.57f,id = "cadnde")
         //this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_AVAILABLE.value, orderDTO)
+        if (transaction.orderID.isNullOrBlank())
+            transaction.orderID = "recharge"
         repo.save(transaction)
         return transaction.id!!
     }
@@ -77,6 +79,9 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
             }
         }
         else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
+            if (order.transactionId.isNullOrBlank()) {
+                return
+            }
             val result = order.id?.let { repo.getTransactionByOrderID(it) }
             if(result != null) {
                 if ((result.size > 1).or(result.size < 1)) {

@@ -18,6 +18,7 @@ import org.mapstruct.factory.Mappers
 @Service
 class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseService {
     private val mapper = Mappers.getMapper(WarehouseMapper::class.java)
+
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
@@ -30,6 +31,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             return
         }
         else if (key == KafkaKeys.KEY_ORDER_CANCELED.value) {
+            reStockProducts(dto.whrecord)
             println("CANCELED: $dto")
             return
         }
@@ -86,7 +88,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
 
     override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): String {
         val warehouseList = repo.findAll()
-        warehouseList.forEach{warehouse -> var count=0; if(warehouse.name==warehouseID) {
+        warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {
             warehouse.stocks.forEach{it->if(it.productId==item.productId) {
                 it.quantity+=item.quantity
                 repo.save(warehouse)
@@ -103,9 +105,10 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
 
 
     fun reStockProducts(whrecord: MutableMap<String, MutableMap<String,Int>>): Boolean {
-        whrecord.forEach { wh ->
+        var temp = HashMap(whrecord)
+        temp.forEach { wh ->
             wh.value.forEach { item ->
-                addProductInWarehouse(wh.key, WarehouseItem(item.key, item.value))
+                println(addProductInWarehouse(wh.key, WarehouseItem(item.key, item.value)))
             }
         }
         return true
