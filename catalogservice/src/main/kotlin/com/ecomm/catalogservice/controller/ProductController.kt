@@ -41,12 +41,17 @@ class ProductController (
     @Autowired
     lateinit var cacheManager: CacheManager
 
-    public fun evictAllCacheValues(cacheName: String) {
-        cacheManager.getCache(cacheName)?.clear();
+    fun evictAllCacheValues(cacheName: String) {
+        val cache = cacheManager.getCache(cacheName)
+        if (cache != null) {
+            cache.invalidate();
+        }else {
+            print("cache not found")
+        }
     }
 
-    @Scheduled(fixedRate = 6000)
-    public fun evictAllCacheValuesAtIntervals() {
+    @Scheduled(fixedRate = 60000)
+    fun evictAllCacheValuesAtIntervals() {
         evictAllCacheValues("warehouseItem");
     }
 
