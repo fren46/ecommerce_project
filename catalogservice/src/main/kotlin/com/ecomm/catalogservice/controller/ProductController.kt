@@ -5,17 +5,27 @@ import com.ecomm.catalogservice.exception.BadRequestException
 import com.ecomm.catalogservice.exception.ProductNotFoundException
 import com.ecomm.catalogservice.service.ProductMapper
 import com.ecomm.catalogservice.service.ProductServiceImpl
+import com.ecomm.commons.WarehouseItem
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.bson.types.ObjectId
 import org.mapstruct.factory.Mappers
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.CacheManager
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
 import java.lang.Error
 import java.lang.IllegalArgumentException
+import java.net.URI
 import javax.validation.Valid
 
 @RestController
@@ -24,7 +34,21 @@ class ProductController (
     private val productService: ProductServiceImpl
     ){
 
+    @Value("\${application.urlWarehouseService}")
+    private lateinit var HostWarehouseS: String
     private val mapper = Mappers.getMapper(ProductMapper::class.java);
+    val restTemplate = RestTemplate()
+    @Autowired
+    lateinit var cacheManager: CacheManager
+
+    public fun evictAllCacheValues(cacheName: String) {
+        cacheManager.getCache(cacheName)?.clear();
+    }
+
+    @Scheduled(fixedRate = 6000)
+    public fun evictAllCacheValuesAtIntervals() {
+        evictAllCacheValues("warehouseItem");
+    }
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
@@ -46,6 +70,28 @@ class ProductController (
             return mapper.toDto(p.get())
         else
             throw ProductNotFoundException("Product with id ${id} not found")
+    }
+
+    @GetMapping("/{id}/availability")
+    @ResponseStatus(HttpStatus.OK)
+    @Cacheable(value = ["warehouseItem"])
+    @ApiOperation(value = "Returns the availability of Product by id")
+    fun getAvailabilityProduct(
+        @PathVariable
+        @ApiParam(value = "Product id", required = true)
+        id: String
+    ): WarehouseItem{
+        val res = restTemplate.exchange(
+            RequestEntity<Any>(HttpMethod.GET, URI.create("http://${HostWarehouseS}/product/${id}/availability")),
+            WarehouseItem::class.java
+        )
+        val body = res.body
+        if (res.statusCode == HttpStatus.OK && body != null) {
+            return body
+        }else{
+            // TODO: 4/2/2021 check the statusCode and return the correct error
+            throw ProductNotFoundException("Product with id ${id} not found")
+        }
     }
 
     @PostMapping("/add")

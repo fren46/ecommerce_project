@@ -2,10 +2,8 @@ package com.ecomm.catalogservice.exception
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import java.util.*
@@ -72,4 +70,35 @@ class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
         )
         return ResponseEntity(errorDetails, HttpStatus.SERVICE_UNAVAILABLE)
     }
+
+    @ExceptionHandler(value = [(OrderListNotFoundException::class)])
+    fun handleOrderListNotFound(ex: OrderListNotFoundException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+        val errorDetails = ErrorsDetails(
+            Date(),
+            "List of order not found",
+            ex.message!!
+        )
+        return ResponseEntity(errorDetails, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(value = [(OrderNotFoundException::class)])
+    fun handleOrderNotFound(ex: OrderNotFoundException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+        val errorDetails = ErrorsDetails(
+            Date(),
+            "Order not found",
+            ex.message!!
+        )
+        return ResponseEntity(errorDetails, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(value = [(BadRequestDeletionOrderException::class)])
+    fun BadRequestDeletionOrderException(ex: BadRequestDeletionOrderException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+        val errorDetails = ErrorsDetails(
+            Date(),
+            "Cannot delete an Order already sent",
+            ex.message!!
+        )
+        return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
+    }
+
 }

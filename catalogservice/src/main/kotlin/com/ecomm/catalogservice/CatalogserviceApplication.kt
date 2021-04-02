@@ -7,6 +7,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.support.beans
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
@@ -19,6 +20,7 @@ import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
 
 @SpringBootApplication
+@EnableCaching
 class CatalogserviceApplication(
     @Value("\${application.urlOrderService}") private var HostOrderS: String,
     @Value("\${application.urlWalletService}") private var HostWalletS: String,
