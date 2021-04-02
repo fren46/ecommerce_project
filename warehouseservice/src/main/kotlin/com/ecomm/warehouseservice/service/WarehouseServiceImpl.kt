@@ -104,23 +104,27 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
     }
 
 
-    fun reStockProducts(whrecord: MutableMap<String, MutableMap<String,Int>>): Boolean {
+    fun reStockProducts(whrecord: MutableMap<String, MutableMap<String,Int>>) {
+        if (whrecord.isNullOrEmpty()) {
+            return
+        }
         var temp = HashMap(whrecord)
         temp.forEach { wh ->
             wh.value.forEach { item ->
                 println(addProductInWarehouse(wh.key, WarehouseItem(item.key, item.value)))
             }
         }
-        return true
+        return
     }
 
     fun consumeProducts(products: MutableMap<String, Int>): MutableMap<String, MutableMap<String, Int>> {
 
         var whrecord = mutableMapOf<String,MutableMap<String, Int>>()
+        var prods = HashMap(products)
         if(products.all { getProductAvailability(it.key)!!.quantity >= it.value }) {
 
             val warehouseList = repo.findAll()
-            var prods = HashMap(products)
+
             warehouseList.forEach{ wh ->
 
                 wh.stocks.forEach{ item ->
@@ -151,8 +155,18 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             }
         }
 
-        return whrecord
+        var count = 0
+        prods.forEach {prod ->
+            count += prod.value
+        }
 
+        return if (count == 0)
+            whrecord
+        else {
+            reStockProducts(whrecord)
+            whrecord.clear()
+            whrecord
+        }
     }
 
 
@@ -169,7 +183,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                         repo.save(warehouse)
                         return map
                     }
-                    if (item.quantity < quantity && item.quantity!=0){
+                    if (item.quantity < quantity && item.quantity!=0) {
                         map.put(warehouse.id, item.quantity)
                         quantity-=item.quantity
                         item.quantity=0
