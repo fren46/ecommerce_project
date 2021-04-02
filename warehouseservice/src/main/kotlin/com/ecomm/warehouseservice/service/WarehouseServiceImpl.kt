@@ -86,21 +86,21 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         return warehouseList
     }
 
-    override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): String {
+    override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): Int {
         val warehouseList = repo.findAll()
         warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {
             warehouse.stocks.forEach{it->if(it.productId==item.productId) {
                 it.quantity+=item.quantity
                 repo.save(warehouse)
-                return item.productId + " updated"
+                return 1
             }
                 count+=1}
             if(count==warehouse.stocks.size){
                 warehouse.stocks.add(item)
                 repo.save(warehouse)
-                return item.productId + " added"
+                return 2
             } } }
-        return "Warehouse not present"
+        return 0
     }
 
 
