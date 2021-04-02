@@ -79,6 +79,7 @@ class OrderController {
         @ApiParam(value = "Order object", required = true)
         order: OrderDTO?
     ): OrderDTO{
+        // TODO: 4/2/2021 add check on body !=null
         //val res = restTemplate.postForObject("http://${HostOrderS}/orders", order,  OrderDTO::class.java)
         val endpoint = URI.create("http://${HostOrderS}/orders")
         val request = RequestEntity<OrderDTO>(order, HttpMethod.POST, endpoint)
@@ -91,6 +92,39 @@ class OrderController {
             throw BadRequestException("Bad Request")
     }
 
+    @PostMapping("/{id}/status")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiOperation(value = "Modify order status")
+    fun modifyOrderStatus(
+        @PathVariable
+        @ApiParam(value = "Order id", required = true)
+        id: String,
+        @RequestBody
+        @ApiParam(value = "New Order status", required = true)
+        string: String?
+    ): OrderDTO{
+        if (string == null ){
+            throw BadRequestException("New status missing")
+        }else if (string == OrderStatus.Delivering.toString() ||
+            string != OrderStatus.Delivered.toString()){
+
+            val newOrderStatus = OrderDTO(id=id, status = string)
+            val res = restTemplate.exchange(
+                RequestEntity<Any>(newOrderStatus, HttpMethod.PUT, URI.create("http://${HostOrderS}/orders")),
+                OrderDTO::class.java
+            )
+            val body = res.body
+            if (res.statusCode == HttpStatus.OK && body != null) {
+                return body
+            }else{
+                // TODO: 4/2/2021 check the statusCode and return the correct error
+                throw OrderNotFoundException("Order with id ${id} not found")
+            }
+        }else{
+            throw BadRequestException("New status not allowed")
+        }
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation(value = "Delete order by id")
@@ -99,11 +133,24 @@ class OrderController {
         @ApiParam(value="Order id")
         id: String
     ): OrderDTO{
+        val newOrderStatus = OrderDTO(id=id, status = OrderStatus.Canceled.toString())
         val res = restTemplate.exchange(
-            RequestEntity<Any>(HttpMethod.GET, URI.create("http://${HostOrderS}/orders/${id}")),
+            RequestEntity<Any>(newOrderStatus, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
             OrderDTO::class.java
         )
-        // TODO: 3/30/2021 check for the status code response.statusCode
+        val body = res.body
+        if (res.statusCode == HttpStatus.OK && body != null) {
+            return body
+        }else{
+            // TODO: 4/2/2021 check the statusCode and return the correct error
+            throw OrderNotFoundException("Order with id ${id} not found")
+        }
+
+/*
+        val res = restTemplate.exchange(
+            RequestEntity<Any>(id, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
+            OrderDTO::class.java
+        )
         val body = res.body
         if (body != null){
             if(body.status == OrderStatus.Pending.toString() || body.status == OrderStatus.Paid.toString()){
@@ -116,6 +163,8 @@ class OrderController {
         }else{
             throw OrderNotFoundException("Order with id ${id} not deleted because not found")
         }
+
+ */
     }
 
 /*

@@ -14,12 +14,14 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.serializer.JsonDeserializer
+import org.springframework.scheduling.annotation.EnableScheduling
 import springfox.documentation.builders.PathSelectors
 import springfox.documentation.builders.RequestHandlerSelectors
 import springfox.documentation.spi.DocumentationType
 import springfox.documentation.spring.web.plugins.Docket
 
 @SpringBootApplication
+@EnableScheduling
 @EnableCaching
 class CatalogserviceApplication(
     @Value("\${application.urlOrderService}") private var HostOrderS: String,
