@@ -20,43 +20,43 @@ class OrderController(
 
 
     @PostMapping
-    fun createOrder(@RequestBody orderDto: OrderDTO): OrderDTO? {
+    fun createOrder(@RequestBody orderDto: OrderDTO): ResponseEntity<OrderDTO> {
         val p = orderServiceImpl.createOrder(orderDto);
-        return mapper.toDto(p)
+        return ResponseEntity.ok(mapper.toDto(p));
     }
 
     @GetMapping()
-    fun getOrders(): List<OrderDTO> {
+    fun getOrders(): ResponseEntity<List<OrderDTO>> {
 
-        return mapper.toDtos(orderServiceImpl.getOrders())
+        return ResponseEntity.ok(mapper.toDtos(orderServiceImpl.getOrders()))
     }
 
     @GetMapping("/{id}")
-    fun getOrder(@PathVariable id: String): OrderDTO? {
+    fun getOrder(@PathVariable id: String): ResponseEntity<OrderDTO> {
         val p = orderServiceImpl.getOrder(id);
         return if(p.isPresent)
-            mapper.toDto(p.get())
+            ResponseEntity.ok(mapper.toDto(p.get()))
         else
-            null
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOrder(@PathVariable id: String): String? {
+    fun deleteOrder(@PathVariable id: String): ResponseEntity<String> {
         val result = orderServiceImpl.cancelOrder(id)
         return if(result)
-            id
+            ResponseEntity.ok(id)
         else
-            null
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
 
     }
 
     @PutMapping()
-    fun modifyOrder(@RequestBody order: OrderDTO): OrderDTO? {
+    fun modifyOrder(@RequestBody order: OrderDTO): ResponseEntity<OrderDTO> {
         val res = orderServiceImpl.modifyOrder(order)
-        if(res.isPresent)
-            return mapper.toDto(res.get())
+        return if(res.isPresent)
+            ResponseEntity.ok(mapper.toDto(res.get()))
         else
-            return null
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
     /*@GetMapping("/open/{id}")
     fun getProductOpen(@PathVariable id: ObjectId): ResponseEntity<OrderDTO> {
