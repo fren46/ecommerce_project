@@ -15,6 +15,8 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.security.core.userdetails.User
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import springfox.documentation.builders.PathSelectors
 import springfox.documentation.builders.RequestHandlerSelectors
 import springfox.documentation.spi.DocumentationType
@@ -30,7 +32,7 @@ class CatalogserviceApplication(
 
 fun main(args: Array<String>) {
     runApplication<CatalogserviceApplication>(*args){
-        addInitializers(
+        /*addInitializers(
             beans {
                 bean<KafkaTemplate<String, Any>> {
                     val producerFactory = DefaultKafkaProducerFactory<String, Any>(mapOf(
@@ -54,7 +56,16 @@ fun main(args: Array<String>) {
                     factory.consumerFactory = consumerFactory;
                     factory
                 }
+                bean {
+				    fun user(user: String, pw: String, vararg roles: String) =
+					    User.withDefaultPasswordEncoder()
+						    .username(user).password(pw).roles(*roles).build()
+
+				    InMemoryUserDetailsManager(
+					    user("user", "password", "USER"),
+					    user("admin", "password", "USER", "ADMIN"))
+			    }
             }
-        )
+        )*/
     }
 }

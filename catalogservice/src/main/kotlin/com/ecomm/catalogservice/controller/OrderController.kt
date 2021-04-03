@@ -1,10 +1,7 @@
 package com.ecomm.catalogservice.controller
 
 import com.ecomm.catalogservice.dto.OrderDTO
-import com.ecomm.catalogservice.exception.BadRequestDeletionOrderException
-import com.ecomm.catalogservice.exception.BadRequestException
-import com.ecomm.catalogservice.exception.OrderListNotFoundException
-import com.ecomm.catalogservice.exception.OrderNotFoundException
+import com.ecomm.catalogservice.exception.*
 import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.OrderStatus
 import com.fasterxml.jackson.databind.JsonNode
@@ -19,6 +16,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
 import java.net.URI
+import javax.annotation.security.RolesAllowed
 
 @RestController
 @RequestMapping("/orders")
@@ -93,6 +91,7 @@ class OrderController {
     }
 
     @PostMapping("/{id}/status")
+    @RolesAllowed("ADMIN")
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation(value = "Modify order status")
     fun modifyOrderStatus(
@@ -115,7 +114,10 @@ class OrderController {
             )
             val body = res.body
             if (res.statusCode == HttpStatus.OK && body != null) {
-                return body
+                if (body.status == string )
+                    return body
+                else
+                    throw NewStatusOrderException("Temporarily not able to change the status to ${string}")
             }else{
                 // TODO: 4/2/2021 check the statusCode and return the correct error
                 throw OrderNotFoundException("Order with id ${id} not found")
@@ -140,7 +142,10 @@ class OrderController {
         )
         val body = res.body
         if (res.statusCode == HttpStatus.OK && body != null) {
-            return body
+            if (body.status == OrderStatus.Canceled.toString() )
+                    return body
+                else
+                    throw NewStatusOrderException("Temporarily not able to delete the order ${id}")
         }else{
             // TODO: 4/2/2021 check the statusCode and return the correct error
             throw OrderNotFoundException("Order with id ${id} not found")
