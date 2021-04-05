@@ -11,4 +11,5 @@ interface ProductService {
     fun addProduct(product: ProductDTO): Product
     fun modifyProduct(id: String, newProduct: ProductDTO): Optional<Product>
     fun deleteProduct(id: String): Optional<Product>
+    fun getProductPrice(id: String): Float
 }
