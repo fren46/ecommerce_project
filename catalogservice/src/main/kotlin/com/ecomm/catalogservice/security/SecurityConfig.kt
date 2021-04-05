@@ -1,5 +1,6 @@
 package com.ecomm.catalogservice
 
+import com.ecomm.catalogservice.security.CustomUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -14,7 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder
 
 @EnableWebSecurity()
 @Configuration
-class SecurityConfig: WebSecurityConfigurerAdapter() {
+class SecurityConfig(
+    private val customUserDetailsService: CustomUserDetailsService,
+    private val passwordEncoderAndMatcher: PasswordEncoder
+    ): WebSecurityConfigurerAdapter() {
 
     override fun configure(http: HttpSecurity) {
         http.httpBasic()
@@ -29,10 +33,9 @@ class SecurityConfig: WebSecurityConfigurerAdapter() {
             .antMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
             .antMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
             .antMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
-            .antMatchers(HttpMethod.GET, "/orders").hasRole("ADMIN")
-            .antMatchers(HttpMethod.GET, "/orders/**").hasRole("USER")
-            .antMatchers(HttpMethod.POST, "/orders/**").hasRole("USER")
-            .antMatchers(HttpMethod.DELETE, "/orders/**").hasRole("USER")
+            .antMatchers(HttpMethod.GET, "/orders/**").hasRole("CUSTOMER")
+            .antMatchers(HttpMethod.POST, "/orders/**").hasRole("CUSTOMER")
+            .antMatchers(HttpMethod.DELETE, "/orders/**").hasRole("CUSTOMER")
             //.anyRequest().authenticated()
             .and()
             .csrf().disable();
@@ -41,25 +44,30 @@ class SecurityConfig: WebSecurityConfigurerAdapter() {
         //http.authorizeRequests().anyRequest().authenticated();
     }
 
-    @Bean
-    fun encoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
-
     override fun configure(auth: AuthenticationManagerBuilder) {
-        auth.inMemoryAuthentication()
-                .withUser("admin")
-                .password(encoder().encode("pass"))
-                .roles("USER", "ADMIN")
-                .and()
-                .withUser("user")
-                .password(encoder().encode("pass"))
-                .roles("USER")
-                .and()
-                .withUser("user2")
-                .password(encoder().encode("pass2"))
-                .roles("USER")
-    }
+		auth.userDetailsService(customUserDetailsService)
+				.passwordEncoder(passwordEncoderAndMatcher)
+	}
+
+//    @Bean
+//    fun encoder(): PasswordEncoder {
+//        return BCryptPasswordEncoder()
+//    }
+//
+//    override fun configure(auth: AuthenticationManagerBuilder) {
+//        auth.inMemoryAuthentication()
+//                .withUser("admin")
+//                .password(encoder().encode("pass"))
+//                .roles("USER", "ADMIN")
+//                .and()
+//                .withUser("user")
+//                .password(encoder().encode("pass"))
+//                .roles("USER")
+//                .and()
+//                .withUser("user2")
+//                .password(encoder().encode("pass2"))
+//                .roles("USER")
+//    }
 
 
     // plug your UserDetailsService
