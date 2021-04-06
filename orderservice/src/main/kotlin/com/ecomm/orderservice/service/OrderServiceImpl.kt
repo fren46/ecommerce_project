@@ -167,7 +167,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
     }
 
     @Transactional
-    override fun cancelOrder(id: String): Boolean {
+    override fun cancelOrder(id: String): OrderDTO? {
         val order = orderRepository.findById(id)
         return if (order.isPresent
                 .and((order.get().status == OrderStatus.Paid)
@@ -190,9 +190,9 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
             )
             val result = this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(modified))
 
-            true
+            mapper.toDto(modified)
         } else
-            false
+            null
     }
 
 

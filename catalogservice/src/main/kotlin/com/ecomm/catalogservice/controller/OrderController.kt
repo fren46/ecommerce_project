@@ -4,7 +4,10 @@ import com.ecomm.catalogservice.dto.OrderDTO
 import com.ecomm.catalogservice.dto.clientOrderDTO
 import com.ecomm.catalogservice.exception.*
 import com.ecomm.catalogservice.repo.ProductRepository
+import com.ecomm.catalogservice.repo.UserRepository
+import com.ecomm.catalogservice.security.CustomUserDetails
 import com.ecomm.catalogservice.service.ProductServiceImpl
+import com.ecomm.commons.KafkaChannels
 import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.OrderStatus
 import com.ecomm.commons.UserRole
@@ -21,6 +24,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
 import java.net.URI
@@ -29,7 +33,8 @@ import javax.annotation.security.RolesAllowed
 @RestController
 @RequestMapping("/orders")
 class OrderController(
-    private val productService: ProductServiceImpl
+    private val productService: ProductServiceImpl,
+    private val userRepository: UserRepository
     ) {
 
     @Value("\${application.urlOrderService}")
@@ -38,7 +43,7 @@ class OrderController(
     val restTemplate = RestTemplate()
     private val TOPIC: String = "status"
     @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String, String>
+    lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
     @GetMapping("")
     @RolesAllowed("ADMIN")
@@ -83,7 +88,7 @@ class OrderController(
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiOperation(value = "Add order")
-    fun addProduct(
+    fun addOrder(
         @RequestBody
         @ApiParam(value = "Order object", required = true)
         order: clientOrderDTO?
@@ -142,12 +147,17 @@ class OrderController(
                 RequestEntity<Any>(newOrderStatus, HttpMethod.PUT, URI.create("http://${HostOrderS}/orders")),
                 OrderDTO::class.java
             )
-            val body = res.body
-            if (res.statusCode == HttpStatus.OK && body != null) {
-                if (body.status == string )
-                    return body
-                else
+            val newOrder = res.body
+            if (res.statusCode == HttpStatus.OK && newOrder != null) {
+                if (newOrder.status == string){
+                    if (string == OrderStatus.Delivering.toString())
+                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERING.value, newOrder)
+                    else if (string != OrderStatus.Delivered.toString())
+                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERED.value, newOrder)
+                    return newOrder
+                }else{
                     throw NewStatusOrderException("Temporarily not able to change the status to ${string}")
+                }
             }else{
                 // TODO: 4/2/2021 check the statusCode and return the correct error
                 throw OrderNotFoundException("Order with id ${id} not found")
@@ -165,19 +175,29 @@ class OrderController(
         @ApiParam(value="Order id")
         id: String
     ): OrderDTO{
+        val auth = SecurityContextHolder.getContext().authentication
+        val userDetail = auth.principal as CustomUserDetails
+        //println(userDetail.id)
+        //val user = userRepository.findByEmail(auth.name)
         val newOrderStatus = OrderDTO(id=id, status = OrderStatus.Canceled.toString())
-        val res = restTemplate.exchange(
-            RequestEntity<Any>(newOrderStatus, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
-            OrderDTO::class.java
-        )
-        val body = res.body
-        if (res.statusCode == HttpStatus.OK && body != null) {
-            if (body.status == OrderStatus.Canceled.toString() )
+        try {
+            val res = restTemplate.exchange(
+                RequestEntity<Any>(newOrderStatus, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
+                OrderDTO::class.java
+            )
+            val body = res.body
+            if (res.statusCode == HttpStatus.OK && body != null && body.buyer == userDetail.id) {
+                if (body.status == OrderStatus.Canceled.toString() )
                     return body
                 else
                     throw NewStatusOrderException("Temporarily not able to delete the order ${id}")
-        }else{
-            // TODO: 4/2/2021 check the statusCode and return the correct error
+            }else if(body != null && body.buyer != userDetail.id){
+                throw BadRequestDeletionOrderException("Deletion not authorized")
+            }else{
+                // TODO: 4/2/2021 check the statusCode and return the correct error
+                throw OrderNotFoundException("Order with id ${id} not found")
+            }
+        }catch (ex: RestClientException){
             throw OrderNotFoundException("Order with id ${id} not found")
         }
 
