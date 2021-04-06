@@ -58,8 +58,7 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     @Throws(IOException::class)
     fun consume(@Payload order: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if(key==KafkaKeys.KEY_ORDER_AVAILABLE.value) {
-            if (getAmount(order.buyer!!)!=null){
-                if (Math.round((order.amount!!).toDouble() * 100) / 100.0 <= getAmount(order.buyer!!)!!) {
+                if (Math.round((order.amount!!).toDouble() * 100) / 100.0 <= getAmount(order.buyer!!)!! && getAmount(order.buyer!!)!= null) {
                     val transactionDTO = TransactionDTO(
                         buyerID = order.buyer,
                         amount = -Math.round((order.amount!!).toDouble() * 100) / 100.0, //The transaction has a negative amount then buying
@@ -78,8 +77,6 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
                     this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_FAILED.value, order)
                     println("Order "  + order.id + " failed")
                 }
-            }
-            else return
         }
             else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
                 if (order.transactionId.isNullOrBlank()) {
