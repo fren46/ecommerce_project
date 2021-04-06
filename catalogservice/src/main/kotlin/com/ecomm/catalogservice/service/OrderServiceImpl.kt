@@ -46,7 +46,6 @@ class OrderServiceImpl(private val emailSender: JavaMailSender, private val user
             )
         }else if(key == KafkaKeys.KEY_ORDER_FAILED.value){
             // TODO: 4/6/2021 make different failed key for each kind of error to notify the user with the correct error (not money or not availability)
-
             var customer = userRepository.findFirstById(dto.buyer!!)
             sendEmail(
                 "[ECOMM][UPDATE] Your order is FAILED",

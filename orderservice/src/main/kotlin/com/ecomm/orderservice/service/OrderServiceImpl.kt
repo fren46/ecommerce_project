@@ -84,7 +84,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                             prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
                             prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
                             amount = dto.amount ?: order.get().amount,
-                            status = OrderStatus.Paid.toString(),
+                            status = OrderStatus.Issued.toString(),
                             modifiedDate = LocalDateTime.now(),
                             createdDate = order.get().createdDate
                         )
@@ -167,10 +167,13 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
     }
 
     @Transactional
-    override fun cancelOrder(id: String): OrderDTO? {
+    override fun cancelOrder(id: String, userId: String): OrderDTO? {
         val order = orderRepository.findById(id)
+        if(order.isPresent && order.get().buyer != userId){
+            return null
+        }
         return if (order.isPresent
-                .and((order.get().status == OrderStatus.Paid)
+                .and((order.get().status == OrderStatus.Issued)
                 .or(order.get().status == OrderStatus.Pending))) {
             val modified = orderRepository.save(
                 mapper.toModel(
@@ -242,6 +245,10 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                     )
                     if (onlyStatus.status == OrderStatus.Canceled) {
                         this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(onlyStatus))
+                    } else if(onlyStatus.status == OrderStatus.Delivered) {
+                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERED.value, mapper.toDto(onlyStatus))
+                    } else if(onlyStatus.status == OrderStatus.Delivering) {
+                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERING.value, mapper.toDto(onlyStatus))
                     }
                     val opt = Optional.of(onlyStatus)
                     return opt
