@@ -25,14 +25,14 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
     private val mapper = Mappers.getMapper(TransactionMapper::class.java)
 
-    override fun getAmount(id: String): Double {
+    override fun getAmount(id: String): Double? {
         val transactionList = repo.getTransactionByBuyerID(id)
         if (transactionList!= emptyList<Transaction>()) {
             val amountList = mutableListOf<Double>()
             transactionList.forEach { amountList.add(it.amount!!) }
             return Math.round(amountList.sum() * 100) / 100.0
         }
-        return 0.0
+        return null
     }
 
     override fun getTransaction(id: String): List<Transaction> {
@@ -58,49 +58,52 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     @Throws(IOException::class)
     fun consume(@Payload order: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if(key==KafkaKeys.KEY_ORDER_AVAILABLE.value) {
-            if (Math.round((order.amount!!).toDouble() * 100) / 100.0 <= getAmount(order.buyer!!)) {
-                val transactionDTO = TransactionDTO(
-                    buyerID = order.buyer,
-                    amount = -Math.round((order.amount!!).toDouble() * 100) / 100.0, //The transaction has a negative amount then buying
-                    created = LocalDateTime.now(),
-                    orderID = order.id
-                )
-                val transaction=mapper.toModel(transactionDTO)
-                repo.save(transaction)
-                println("Transaction " + transaction.id + " added")
-                order.transactionId = transaction.id
-                this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_PAID.value, order)
-            }
-
-            else {
-
-                this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_FAILED.value, order)
-                println("Order "  + order.id + " failed")
-            }
-        }
-        else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
-            if (order.transactionId.isNullOrBlank()) {
-                return
-            }
-            val result = order.id?.let { repo.getTransactionByOrderID(it) }
-            if(result != null) {
-                if ((result.size > 1).or(result.size < 1)) {
-                    return
-                }
-                else  {
-
+            if (getAmount(order.buyer!!)!=null){
+                if (Math.round((order.amount!!).toDouble() * 100) / 100.0 <= getAmount(order.buyer!!)!!) {
                     val transactionDTO = TransactionDTO(
-                        buyerID = result[0].buyerID,
-                        amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
+                        buyerID = order.buyer,
+                        amount = -Math.round((order.amount!!).toDouble() * 100) / 100.0, //The transaction has a negative amount then buying
                         created = LocalDateTime.now(),
                         orderID = order.id
                     )
+                    val transaction=mapper.toModel(transactionDTO)
+                    repo.save(transaction)
+                    println("Transaction " + transaction.id + " added")
+                    order.transactionId = transaction.id
+                    this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_PAID.value, order)
+                }
 
-                    repo.save(mapper.toModel(transactionDTO))
-                    println("Order " + order.id + " Refunded")
+                else {
+
+                    this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_FAILED.value, order)
+                    println("Order "  + order.id + " failed")
                 }
             }
-
+            else return
         }
-   }
-}
+            else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
+                if (order.transactionId.isNullOrBlank()) {
+                    return
+                }
+                val result = order.id?.let { repo.getTransactionByOrderID(it) }
+                if(result != null) {
+                    if ((result.size > 1).or(result.size < 1)) {
+                        return
+                    }
+                    else  {
+
+                        val transactionDTO = TransactionDTO(
+                            buyerID = result[0].buyerID,
+                            amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
+                            created = LocalDateTime.now(),
+                            orderID = order.id
+                        )
+
+                        repo.save(mapper.toModel(transactionDTO))
+                        println("Order " + order.id + " Refunded")
+                    }
+                }
+
+            }
+        }
+    }

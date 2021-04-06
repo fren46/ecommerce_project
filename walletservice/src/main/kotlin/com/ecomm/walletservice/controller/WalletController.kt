@@ -14,8 +14,11 @@ class WalletController (val walletService: WalletServiceImpl) {
 
     @GetMapping("/{id}/wallet")
     @ApiOperation(value = "Return the wallet amount of a given buyer")
-    fun getAmount(@PathVariable id:String):ResponseEntity<Double>{
-        return ResponseEntity(walletService.getAmount(id), HttpStatus.OK)}
+    fun getAmount(@PathVariable id:String):ResponseEntity<Double?>{
+        val amount= walletService.getAmount(id)
+        return if (amount!= null)
+            ResponseEntity(amount, HttpStatus.OK)
+        else ResponseEntity(HttpStatus.NOT_FOUND)}
 
     @GetMapping("/{id}/transaction")
     @ApiOperation(value = "Return all the transaction for a given buyer")
