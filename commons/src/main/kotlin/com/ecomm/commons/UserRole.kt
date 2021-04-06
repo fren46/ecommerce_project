@@ -1,5 +1,5 @@
 package com.ecomm.commons
 
 enum class UserRole {
-    Customer,Admin
+    ROLE_CUSTOMER, ROLE_ADMIN
 }

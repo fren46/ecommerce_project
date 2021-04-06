@@ -17,3 +17,5 @@ class OrderListNotFoundException (override val message: String?) : Exception(mes
 class OrderNotFoundException (override val message: String?) : Exception(message)
 
 class BadRequestDeletionOrderException (override val message: String?) : Exception(message)
+
+class NewStatusOrderException (override val message: String?) : Exception(message)

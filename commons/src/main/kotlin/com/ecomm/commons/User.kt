@@ -6,12 +6,32 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 
 @Document
-class User(
+open class User(
     @Id
-    val id: ObjectId = ObjectId.get(),
-    val name: String,
-    val surname:String,
-    val email: String,
-    val deliveryAddress:String?,
-    val role: UserRole
-)
+    var id: ObjectId = ObjectId.get(),
+    var name: String,
+    var surname:String,
+    var email: String,
+    var deliveryAddress:String?,
+    var roles: List<UserRole>,
+    var passw: String
+){
+    var accountNonExpired: Boolean = true
+	var accountNonLocked: Boolean = true
+	var credentialsNonExpired: Boolean = true
+	var enabled: Boolean = true
+//    constructor(user: User) : this(user.id, user.name, user.surname, user.email, user.deliveryAddress, user.roles, user.passw) {
+//		id = user.id
+//		name = user.name
+//		surname = user.surname
+//		email = user.email
+//		passw = user.passw
+//        accountNonExpired = true
+//        accountNonLocked = true
+//        credentialsNonExpired = true
+//        enabled = true
+//        deliveryAddress = user.deliveryAddress
+//		roles = user.roles
+//	}
+
+}

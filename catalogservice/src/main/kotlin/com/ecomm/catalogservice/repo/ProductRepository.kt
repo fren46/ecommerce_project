@@ -11,4 +11,5 @@ import java.util.*
 interface ProductRepository: MongoRepository<Product, String> {
     fun getProductByNameAndCategoryAndPrice(name:String, category:ProductCategory, price: Float): Product?
     fun deleteProductById(id: String): Optional<Product>
+    fun getProductById(id: String): Optional<Product>
 }

@@ -9,6 +9,7 @@ import org.bson.types.ObjectId
 import org.mapstruct.Mapper
 import org.mapstruct.factory.Mappers
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.expression.common.ExpressionUtils.toFloat
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
@@ -41,6 +42,14 @@ class ProductServiceImpl(
 
     override fun getProduct(id: String): Optional<Product> {
         return productRepository.findById(id)
+    }
+
+    override fun getProductPrice(id: String): Float {
+        val product = productRepository.findById(id)
+        return if (product.isPresent)
+            product.get().price!!
+        else
+            0.0f
     }
 
     override fun addProduct(product: ProductDTO): Product{
@@ -83,8 +92,7 @@ class ProductServiceImpl(
 
     @KafkaListener(
         topics = ["test"],
-        groupId = "catalog",
-        containerFactory = "ProductJsonListener")
+        groupId = "catalog")
     fun consumeTestEvent(product: ProductDTO){
         print(product)
     }
