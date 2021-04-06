@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document
 open class User(
     @Id
-    var id: ObjectId = ObjectId.get(),
+    var id: String? = ObjectId.get().toString(),
     var name: String,
     var surname:String,
     var email: String,

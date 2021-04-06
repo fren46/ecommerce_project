@@ -78,8 +78,9 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                 }
             }
         finallist.forEach{if(it.productId==id) return it}
-        return null
+        return WarehouseItem(productId = id, quantity = 0)
     }
+
     override fun getWarehouseList(): List<WarehouseDTO>? {
         val warehouseList= mutableListOf<WarehouseDTO>()
         repo.findAll().forEach{warehouse -> warehouseList.add(mapper.toDto(warehouse))}

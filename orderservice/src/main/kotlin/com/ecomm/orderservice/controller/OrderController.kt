@@ -41,10 +41,10 @@ class OrderController(
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOrder(@PathVariable id: String): ResponseEntity<String> {
+    fun deleteOrder(@PathVariable id: String): ResponseEntity<OrderDTO> {
         val result = orderServiceImpl.cancelOrder(id)
-        return if(result)
-            ResponseEntity.ok(id)
+        return if(result!=null)
+            ResponseEntity.ok(result)
         else
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
 

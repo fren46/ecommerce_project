@@ -7,6 +7,6 @@ import java.util.*
 interface OrderService {
     fun createOrder(dto: OrderDTO): Order
     fun getOrder(id: String): Optional<Order>
-    fun cancelOrder(id: String): Boolean
+    fun cancelOrder(id: String): OrderDTO?
     fun modifyOrder(dto: OrderDTO): Optional<Order>
 }

@@ -17,7 +17,7 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
         return if (wItem != null)
             ResponseEntity(wItem, HttpStatus.OK)
         else
-            ResponseEntity(null, HttpStatus.NOT_FOUND)
+            ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
     @GetMapping("/product/{id}/consume/{n}")

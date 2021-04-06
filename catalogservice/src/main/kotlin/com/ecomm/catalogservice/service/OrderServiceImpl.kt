@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service
 @Service
 class OrderServiceImpl(private val emailSender: JavaMailSender, private val userRepository: UserRepository): OrderService {
 
-    @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
+    //@Autowired
+    //lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
     fun sendEmail(
         subject: String,
@@ -36,22 +36,37 @@ class OrderServiceImpl(private val emailSender: JavaMailSender, private val user
         @Payload dto: OrderDTO,
         @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String
     ) {
-        if(key == KafkaKeys.KEY_ORDER_PAID.toString()){
-            var customer = userRepository.findById(dto.buyer!!)
+        println("porco schifo ho fallito dto: "+dto)
+        if(key == KafkaKeys.KEY_ORDER_PAID.value){
+            var customer = userRepository.findFirstById(dto.buyer!!)
             sendEmail(
                 "[ECOMM][UPDATE] Your order is PAID",
                 "Dear Customer ${customer.name} ${customer.surname} your order with id ${dto.id} is PAID",
                 customer.email
             )
-        }else if(key == KafkaKeys.KEY_ORDER_FAILED.toString()){
+        }else if(key == KafkaKeys.KEY_ORDER_FAILED.value){
             // TODO: 4/6/2021 make different failed key for each kind of error to notify the user with the correct error (not money or not availability)
-            var customer = userRepository.findById(dto.buyer!!)
+
+            var customer = userRepository.findFirstById(dto.buyer!!)
             sendEmail(
                 "[ECOMM][UPDATE] Your order is FAILED",
                 "Dear Customer ${customer.name} ${customer.surname} your order with id ${dto.id} is FAILED",
                 customer.email
             )
+        }else if(key == KafkaKeys.KEY_ORDER_DELIVERED.value){
+            var customer = userRepository.findFirstById(dto.buyer!!)
+            sendEmail(
+                "[ECOMM][UPDATE] Your order is DELIVERED",
+                "Dear Customer ${customer.name} ${customer.surname} your order with id ${dto.id} is DELIVERED",
+                customer.email
+            )
+        }else if(key == KafkaKeys.KEY_ORDER_DELIVERING.value){
+            var customer = userRepository.findFirstById(dto.buyer!!)
+            sendEmail(
+                "[ECOMM][UPDATE] Your order is DELIVERING",
+                "Dear Customer ${customer.name} ${customer.surname} your order with id ${dto.id} is DELIVERING",
+                customer.email
+            )
         }
-
     }
 }
