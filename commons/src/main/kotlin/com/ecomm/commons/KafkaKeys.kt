@@ -11,6 +11,7 @@ enum class KafkaKeys(val value: String) {
     KEY_ORDER_CANCELING("ordercanceling"),
     KEY_ORDER_REFUNDED("orderrefunded"),
     KEY_ORDER_RESTOCKED("orderrestocked"),
-    KEY_ORDER_CANCELFAILED("ordercancelfailed")
+    KEY_ORDER_CANCELFAILED("ordercancelfailed"),
+    KEY_PRODUCT_WARNING("productwarning")
 
 }

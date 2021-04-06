@@ -62,4 +62,18 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
             return ResponseEntity("Product quantity increased", HttpStatus.OK)
         return ResponseEntity("Product added ", HttpStatus.OK)
     }
+
+    @PostMapping("/warning/{warehouseId}/{prodId}")
+    fun modifyWarningInWarehouse(@RequestBody t: String,@PathVariable warehouseId: String, @PathVariable prodId: String): ResponseEntity<String> {
+        return try {
+            val num = t.toInt()
+            if(warehouseService.setWarning(warehouseId, prodId, num))
+                ResponseEntity("Product alarm modified", HttpStatus.OK)
+            else
+                ResponseEntity("Product alarm not modified", HttpStatus.NOT_MODIFIED)
+        }catch (ex: NumberFormatException) {
+            ResponseEntity("Product alarm must be an Integer", HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+        }
+
+    }
 }

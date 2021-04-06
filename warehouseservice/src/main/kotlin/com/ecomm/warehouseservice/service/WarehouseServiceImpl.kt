@@ -21,6 +21,17 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
 
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
+    @Autowired
+    lateinit var kafkaTemplate2: KafkaTemplate<String, WarningDTO>
+
+    @KafkaListener(topics = ["warning"], groupId = "warehouse")
+    @Throws(IOException::class)
+    @Transactional
+    fun consume2(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
+            println("PRODUCT WARNING: $dto")
+        }
+    }
 
     @KafkaListener(topics = ["status"], groupId = "warehouse")
     @Throws(IOException::class)
@@ -50,19 +61,47 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                     temp)
 
             }
-            else
+            else {
                 this.kafkaTemplate.send(
                     KafkaChannels.TOPIC.value,
                     KafkaKeys.KEY_ORDER_AVAILABLE.value,
-                    temp)
-
+                    temp
+                )
+                temp.whrecord.forEach {wh ->
+                    wh.value.forEach {item ->
+                        if(isProdAvailabilityLow(item.key, wh.key)) {
+                            val whItem = WarningDTO(wh.key, item.key)
+                            this.kafkaTemplate2.send(
+                                KafkaChannels.WARNING.value,
+                                KafkaKeys.KEY_PRODUCT_WARNING.value,
+                                whItem
+                            )
+                        }
+                    }
+                }
+            }
             println("CREATED: $dto")
             return
         }
+
         else if (key == KafkaKeys.KEY_ORDER_AVAILABLE.value) {
             println("AVAILABLE: $dto")
             return
         }
+    }
+
+    fun setWarning(whId: String, prodId: String, warning: Int): Boolean {
+        if(warning <= 0)
+            return false
+        val warehouse = repo.getWarehouseById(whId)
+        warehouse?.stocks?.forEach { item ->
+            if (item.productId == prodId) {
+                item.alarm = warning
+                repo.save(warehouse)
+                return true
+            }
+        }
+        return false
     }
 
     override fun getProductAvailability(id:String): WarehouseItem? {
@@ -79,6 +118,18 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             }
         finallist.forEach{if(it.productId==id) return it}
         return WarehouseItem(productId = id, quantity = 0)
+    }
+
+    fun isProdAvailabilityLow(prodId: String, whId: String): Boolean {
+        val warehouse = repo.getWarehouseById(whId)
+        if (warehouse != null) {
+            warehouse.stocks.forEach {item ->
+                if (item.productId == prodId)
+                    if(item.quantity <= item.alarm)
+                        return true
+            }
+        }
+        return false
     }
 
     override fun getWarehouseList(): List<WarehouseDTO>? {

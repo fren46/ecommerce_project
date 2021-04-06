@@ -73,7 +73,6 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
                 }
 
                 else {
-
                     this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_FAILED.value, order)
                     println("Order "  + order.id + " failed")
                 }
