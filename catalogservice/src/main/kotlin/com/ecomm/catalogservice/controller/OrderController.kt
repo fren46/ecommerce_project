@@ -94,13 +94,14 @@ class OrderController(
         order: clientOrderDTO?
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
+        val userDetail = auth.principal as CustomUserDetails
         val isAdmin: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_ADMIN.toString() }
         val isCustomer: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_CUSTOMER.toString() }
         var priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
         var sum: Float = 0.0f
-        if (order?.buyer == null || order.prodList == null){
+        if (order?.buyer == null || order.prodList == null ){
             throw BadRequestException("No correct Order in the request")
-        } else if (auth.authorities.any(isAdmin) || (auth.name == order.buyer && auth.authorities.any(isCustomer))){
+        } else if (auth.authorities.any(isAdmin) || (userDetail.id == order.buyer && auth.authorities.any(isCustomer))){
             // calculate prodPrice
             order.prodList.keys.forEach { prodId -> priceList[prodId] = productService.getProductPrice(prodId) }
             // calculate amount
@@ -140,7 +141,7 @@ class OrderController(
         if (string == null ){
             throw BadRequestException("New status missing")
         }else if (string == OrderStatus.Delivering.toString() ||
-            string != OrderStatus.Delivered.toString()){
+            string == OrderStatus.Delivered.toString()){
 
             val newOrderStatus = OrderDTO(id=id, status = string)
             val res = restTemplate.exchange(
@@ -150,11 +151,13 @@ class OrderController(
             val newOrder = res.body
             if (res.statusCode == HttpStatus.OK && newOrder != null) {
                 if (newOrder.status == string){
-                    if (string == OrderStatus.Delivering.toString())
+                    /*if (string == OrderStatus.Delivering.toString())
                         this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERING.value, newOrder)
                     else if (string != OrderStatus.Delivered.toString())
                         this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERED.value, newOrder)
+                    */
                     return newOrder
+
                 }else{
                     throw NewStatusOrderException("Temporarily not able to change the status to ${string}")
                 }
@@ -182,17 +185,15 @@ class OrderController(
         val newOrderStatus = OrderDTO(id=id, status = OrderStatus.Canceled.toString())
         try {
             val res = restTemplate.exchange(
-                RequestEntity<Any>(newOrderStatus, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
+                RequestEntity<Any>(newOrderStatus, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}?userId=${userDetail.id}")),
                 OrderDTO::class.java
             )
             val body = res.body
-            if (res.statusCode == HttpStatus.OK && body != null && body.buyer == userDetail.id) {
+            if (res.statusCode == HttpStatus.OK && body != null) {
                 if (body.status == OrderStatus.Canceled.toString() )
                     return body
                 else
                     throw NewStatusOrderException("Temporarily not able to delete the order ${id}")
-            }else if(body != null && body.buyer != userDetail.id){
-                throw BadRequestDeletionOrderException("Deletion not authorized")
             }else{
                 // TODO: 4/2/2021 check the statusCode and return the correct error
                 throw OrderNotFoundException("Order with id ${id} not found")
@@ -208,7 +209,7 @@ class OrderController(
         )
         val body = res.body
         if (body != null){
-            if(body.status == OrderStatus.Pending.toString() || body.status == OrderStatus.Paid.toString()){
+            if(body.status == OrderStatus.Pending.toString() || body.status == OrderStatus.Issued.toString()){
                 this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CANCELED.value, id)
                 return body
             }else{

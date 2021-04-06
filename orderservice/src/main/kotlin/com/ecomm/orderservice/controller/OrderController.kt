@@ -3,6 +3,7 @@ package com.ecomm.orderservice.controller
 import com.ecomm.orderservice.dto.OrderMapper
 import com.ecomm.commons.OrderDTO
 import com.ecomm.orderservice.service.OrderServiceImpl
+import org.bson.types.ObjectId
 import org.mapstruct.factory.Mappers
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -41,8 +42,8 @@ class OrderController(
     }
 
     @DeleteMapping("/{id}")
-    fun deleteOrder(@PathVariable id: String): ResponseEntity<OrderDTO> {
-        val result = orderServiceImpl.cancelOrder(id)
+    fun deleteOrder(@PathVariable id: String, @RequestParam userId: String): ResponseEntity<OrderDTO> {
+        val result = orderServiceImpl.cancelOrder(id, userId)
         return if(result!=null)
             ResponseEntity.ok(result)
         else
