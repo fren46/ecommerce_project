@@ -87,6 +87,12 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         return warehouseList
     }
 
+    override fun getSimpleWarehouseList(): List<SimpleWarehouseDTO>? {
+        val warehouseList= mutableListOf<SimpleWarehouseDTO>()
+        repo.findAll().forEach{warehouse -> warehouseList.add(SimpleWarehouseDTO(id = warehouse.id,name=warehouse.name))}
+        return warehouseList
+    }
+
     override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): Int {
         val warehouseList = repo.findAll()
         warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {

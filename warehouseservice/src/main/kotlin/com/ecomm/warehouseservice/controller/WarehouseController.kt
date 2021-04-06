@@ -1,5 +1,6 @@
 package com.ecomm.warehouseservice.controller
 
+import com.ecomm.commons.SimpleWarehouseDTO
 import com.ecomm.commons.WarehouseItem
 import com.ecomm.warehouseservice.dto.WarehouseDTO
 import com.ecomm.warehouseservice.service.WarehouseServiceImpl
@@ -32,10 +33,20 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
             ResponseEntity(null, HttpStatus.NOT_FOUND)
     }
 
-    @GetMapping("/warehouse")
+    @GetMapping("/warehouses")
     @ApiOperation(value = "Return the list of warehouses")
     fun getWarehouseList(): ResponseEntity<List<WarehouseDTO>?> {
         val warehouseList= warehouseService.getWarehouseList()
+        return if (warehouseList != null)
+            ResponseEntity(warehouseList, HttpStatus.OK)
+        else
+            ResponseEntity(null, HttpStatus.NOT_FOUND)
+    }
+
+    @GetMapping("/warehouses/simple")
+    @ApiOperation(value = "Return the list of warehouses")
+    fun getSimpleWarehouseList(): ResponseEntity<List<SimpleWarehouseDTO>?> {
+        val warehouseList= warehouseService.getSimpleWarehouseList()
         return if (warehouseList != null)
             ResponseEntity(warehouseList, HttpStatus.OK)
         else
