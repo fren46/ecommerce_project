@@ -99,9 +99,15 @@ class OrderController(
         val isCustomer: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_CUSTOMER.toString() }
         var priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
         var sum: Float = 0.0f
-        if (order?.buyer == null || order.prodList == null ){
+        if ( (order?.buyer == null && userDetail.authorities.any(isAdmin)) || order?.prodList == null ){
             throw BadRequestException("No correct Order in the request")
-        } else if (auth.authorities.any(isAdmin) || (userDetail.id == order.buyer && auth.authorities.any(isCustomer))){
+        }
+        if(order?.buyer == null && userDetail.authorities.any(isCustomer)) {
+            // if the body of the request don't contain the buyer and the logged user is a Custom
+            // the buyer value is filled with the id of the logged User retrieved by the Security Context
+            order.buyer = userDetail.id
+        }
+        if (auth.authorities.any(isAdmin) || (userDetail.id == order.buyer && auth.authorities.any(isCustomer))){
             // calculate prodPrice
             order.prodList.keys.forEach { prodId -> priceList[prodId] = productService.getProductPrice(prodId) }
             // calculate amount
