@@ -33,12 +33,14 @@ class OrderController(
     }
 
     @GetMapping("/{id}")
-    fun getOrder(@PathVariable id: String): ResponseEntity<OrderDTO> {
-        val p = orderServiceImpl.getOrder(id);
-        return if(p.isPresent)
-            ResponseEntity.ok(mapper.toDto(p.get()))
-        else
-            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+    fun getOrder(@PathVariable id: String, @RequestParam userId: String, @RequestParam isAdmin: Boolean): ResponseEntity<OrderDTO> {
+        try {
+            val p = orderServiceImpl.getOrder(id, userId, isAdmin);
+            return ResponseEntity.ok(p!!)
+        }catch (ex: ResponseStatusException){
+            throw ResponseStatusException(ex.status)
+        }
+
     }
 
     @DeleteMapping("/{id}")

@@ -160,7 +160,6 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             repo.save(wh)
             return item.quantity
         }else
-            println("warehouse non trovato")
             return null
 
 //        val warehouseList = repo.findAll()

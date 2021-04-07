@@ -33,21 +33,13 @@ class WalletController(
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation(value = "Returns the money on the wallet of logged user")
     fun getLoggedUserWallet(): Double{
-        try {
-            val auth = SecurityContextHolder.getContext().authentication
-            val userDetail = auth.principal as CustomUserDetails
-            val res = restTemplate.exchange(
-                RequestEntity<Any>(HttpMethod.GET, URI.create("http://${HostWalletS}/${userDetail.id}/wallet")),
-                Double::class.java
-            )
-            if (res.statusCode == HttpStatus.OK && res.body!= null)
-                return res.body!!
-            else
-                throw WalletNotFoundException("Wallet of user with id ${userDetail.id} not found")
-
-        }catch (ex: RestClientException){
-            throw WalletNotFoundException("Wallet not found")
-        }
+        val auth = SecurityContextHolder.getContext().authentication
+        val userDetail = auth.principal as CustomUserDetails
+        val res = restTemplate.exchange(
+            RequestEntity<Any>(HttpMethod.GET, URI.create("http://${HostWalletS}/${userDetail.id}/wallet")),
+            Double::class.java
+        )
+        return res.body!!
     }
 
     @GetMapping("/{id}")

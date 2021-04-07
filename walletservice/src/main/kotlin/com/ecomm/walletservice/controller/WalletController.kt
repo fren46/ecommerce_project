@@ -19,7 +19,8 @@ class WalletController (val walletService: WalletServiceImpl) {
         return if (amount!= null)
             ResponseEntity(amount, HttpStatus.OK)
         else
-            ResponseEntity(HttpStatus.NOT_FOUND)}
+            ResponseEntity(0.0, HttpStatus.OK)
+    }
 
     @GetMapping("/{id}/transaction")
     @ApiOperation(value = "Return all the transaction for a given buyer")

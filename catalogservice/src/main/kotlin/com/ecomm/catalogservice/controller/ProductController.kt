@@ -151,10 +151,6 @@ class ProductController (
             throw ProductNotFoundException("Product with id ${id} not found")
     }
 
-    @PostMapping("/test")
-    fun produceEventTest(@RequestBody product: ProductDTO){
-        productService.produceTestEvent(product)
-    }
 
 
 

@@ -24,6 +24,7 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.server.ResponseStatusException
@@ -44,6 +45,9 @@ class OrderController(
     private val TOPIC: String = "status"
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
+
+    val isAdmin: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_ADMIN.toString() }
+    val isCustomer: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_CUSTOMER.toString() }
 
     @GetMapping("")
     @RolesAllowed("ADMIN")
@@ -73,16 +77,27 @@ class OrderController(
         @ApiParam(value = "Order id", required = true)
         id: String
     ): OrderDTO{
-        //val res = restTemplate.getForObject("http://${HostOrderS}/orders/${id}", OrderDTO::class.java)
-        val endpoint = URI.create("http://${HostOrderS}/orders/${id}")
-        val request = RequestEntity<Any>(HttpMethod.GET, endpoint)
-        val response = restTemplate.exchange(request, OrderDTO::class.java)
-        // TODO: 3/30/2021 check for the status code response.statusCode
-        val body = response.body
-        if (body!=null)
-            return body
-        else
-            throw OrderNotFoundException("Order with id ${id} not found")
+        val auth = SecurityContextHolder.getContext().authentication
+        val userDetail = auth.principal as CustomUserDetails
+        var isadmin :Boolean= false
+        if (auth.authorities.any(isAdmin))
+            isadmin = true
+        try {
+            val endpoint = URI.create("http://${HostOrderS}/orders/${id}?userId=${userDetail.id}&isAdmin=${isadmin}")
+            val request = RequestEntity<Any>(HttpMethod.GET, endpoint)
+            val response = restTemplate.exchange(request, OrderDTO::class.java)
+            val body = response.body
+            if (body!=null)
+                return body
+            else
+                throw OrderNotFoundException("Order with id ${id} not found")
+        }catch (ex: HttpClientErrorException){
+            if (ex.statusCode == HttpStatus.FORBIDDEN)
+                throw ForbiddenException("Request forbidden")
+            else
+                throw OrderNotFoundException("Order with id ${id} not found")
+        }
+
     }
 
     @PostMapping("/add")
@@ -95,8 +110,6 @@ class OrderController(
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
         val userDetail = auth.principal as CustomUserDetails
-        val isAdmin: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_ADMIN.toString() }
-        val isCustomer: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_CUSTOMER.toString() }
         var priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
         var sum: Float = 0.0f
         if ( (order?.buyer == null && userDetail.authorities.any(isAdmin)) || order?.prodList == null ){
@@ -157,11 +170,6 @@ class OrderController(
             val newOrder = res.body
             if (res.statusCode == HttpStatus.OK && newOrder != null) {
                 if (newOrder.status == string){
-                    /*if (string == OrderStatus.Delivering.toString())
-                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERING.value, newOrder)
-                    else if (string != OrderStatus.Delivered.toString())
-                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERED.value, newOrder)
-                    */
                     return newOrder
 
                 }else{

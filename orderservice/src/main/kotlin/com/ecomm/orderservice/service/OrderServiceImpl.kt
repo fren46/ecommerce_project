@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 import java.util.*
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import java.io.IOException
 
 import org.springframework.kafka.annotation.KafkaListener
@@ -18,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 
 
 @Service
@@ -161,9 +163,16 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
         return orderRepository.findAll()
     }
 
-    override fun getOrder(id: String): Optional<Order> {
-        println("Requested => ${id}")
-        return orderRepository.findById(id)
+    @Throws(ResponseStatusException::class)
+    override fun getOrder(id: String, userId: String, isAdmin: Boolean): OrderDTO? {
+        val order = orderRepository.findById(id)
+        if(!order.isPresent){
+            throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        }else if(order.get().buyer != userId && !isAdmin){
+            throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        }else{
+            return mapper.toDto(order.get())
+        }
     }
 
     @Transactional

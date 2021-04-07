@@ -24,10 +24,10 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
             ResponseEntity(HttpStatus.NOT_FOUND)
     }
 
-    @GetMapping("/{wh}/product/{id}/consume/{n}")
+    @GetMapping("/{wh}/product/{id}/consume")
     @ApiOperation(value = "Consume n product given its ID")
-    fun consumeProduct(@PathVariable wh: String,@PathVariable id: String, @PathVariable n: Int): ResponseEntity<Map<String,Int>?> {
-        val consumed= warehouseService.consumeProduct(wh,id,n)
+    fun consumeProduct(@PathVariable wh: String,@PathVariable id: String, @RequestParam quantity: Int): ResponseEntity<Map<String,Int>?> {
+        val consumed= warehouseService.consumeProduct(wh,id,quantity)
         return if (consumed != null)
             ResponseEntity(consumed, HttpStatus.OK)
         else
@@ -52,7 +52,7 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
     }
 
     @PostMapping("/product/{warehouseId}")
-    fun addProductInWarehouse(@RequestBody t: WarehouseItem,@PathVariable warehouseId: String): ResponseEntity<Int> {
+    fun addProductInWarehouse(@RequestBody t: WarehouseItem, @PathVariable warehouseId: String): ResponseEntity<Int> {
         val quantity = warehouseService.addProductInWarehouse(warehouseId,t)
         if (quantity == null)
             return ResponseEntity(HttpStatus.NOT_FOUND)

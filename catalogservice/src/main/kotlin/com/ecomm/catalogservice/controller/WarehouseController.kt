@@ -2,7 +2,10 @@ package com.ecomm.catalogservice.controller
 
 import com.ecomm.commons.WarningProductDTO
 import com.ecomm.catalogservice.exception.BadRequestException
+import com.ecomm.catalogservice.exception.ProductNotFoundException
 import com.ecomm.catalogservice.exception.WarehouseNotFoundException
+import com.ecomm.catalogservice.repo.ProductRepository
+import com.ecomm.catalogservice.repo.UserRepository
 import com.ecomm.commons.SimpleWarehouseDTO
 import com.ecomm.commons.WarehouseItem
 import io.swagger.annotations.ApiOperation
@@ -19,7 +22,9 @@ import java.net.URI
 
 @RestController
 @RequestMapping("/warehouses")
-class WarehouseController {
+class WarehouseController (
+    private val productRepository: ProductRepository
+        ) {
 
     @Value("\${application.urlWarehouseService}")
     private lateinit var HostWarehouseS: String
@@ -52,14 +57,19 @@ class WarehouseController {
             throw BadRequestException("Quantity must be greater than zero")
         }
         try {
-            val res = restTemplate.exchange(
-                RequestEntity<Any>(warehouseItem, HttpMethod.POST, URI.create("http://${HostWarehouseS}/product/${id}")),
-                Int::class.java
-            )
-            if (res.statusCode == HttpStatus.NOT_FOUND)
-                throw WarehouseNotFoundException("Warehouse with id ${id} not found")
-            else
-                return res.body!!
+            val product = productRepository.findById(warehouseItem.productId)
+            if (product.isPresent){
+                val res = restTemplate.exchange(
+                    RequestEntity<Any>(warehouseItem, HttpMethod.POST, URI.create("http://${HostWarehouseS}/product/${id}")),
+                    Int::class.java
+                )
+                if (res.statusCode == HttpStatus.NOT_FOUND)
+                    throw WarehouseNotFoundException("Warehouse with id ${id} not found")
+                else
+                    return res.body!!
+            }else{
+                throw ProductNotFoundException("Product with id ${warehouseItem.productId} not found")
+            }
         }catch (ex: RestClientException){
             throw WarehouseNotFoundException("Warehouse  not found")
         }
