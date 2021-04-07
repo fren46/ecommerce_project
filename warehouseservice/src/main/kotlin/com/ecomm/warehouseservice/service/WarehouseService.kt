@@ -6,7 +6,7 @@ import com.ecomm.warehouseservice.dto.WarehouseDTO
 
 interface WarehouseService {
     fun getProductAvailability(id:String):WarehouseItem?
-    fun consumeProduct(id:String,n:Int):Map<String,Int>?
+    fun consumeProduct(wh: String, id:String,n:Int):Map<String,Int>?
     fun getWarehouseList():List<WarehouseDTO>?
     fun getSimpleWarehouseList():List<SimpleWarehouseDTO>?
     fun addProductInWarehouse(warehouseID:String, item: WarehouseItem):Int?

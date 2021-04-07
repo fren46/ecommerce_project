@@ -246,29 +246,15 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
     }
 
 
-    override fun consumeProduct(id: String, n: Int): Map<String,Int>? {
-        if(getProductAvailability(id)!!.quantity>=n) {
-            var quantity=n
-            val map= mutableMapOf<String,Int>()
-            val warehouseList = repo.findAll()
-            warehouseList.forEach{warehouse-> warehouse.stocks.forEach { item ->
-                if (item.productId == id) {
-                    if (item.quantity >= quantity) {
-                        item.quantity -= quantity
-                        map.put(warehouse.id, quantity)
-                        repo.save(warehouse)
-                        return map
-                    }
-                    if (item.quantity < quantity && item.quantity!=0) {
-                        map.put(warehouse.id, item.quantity)
-                        quantity-=item.quantity
-                        item.quantity=0
-                        repo.save(warehouse)
-                    }
-                }
+    override fun consumeProduct(wh: String, id: String, n: Int): Map<String,Int>? {
+        val warehouse = repo.getWarehouseById(wh)
+        if (warehouse != null) {
+            warehouse.stocks.forEach{ if(it.productId==id && it.quantity>n) {
+                it.quantity-=n
+                repo.save(warehouse)
+                return mapOf(it.productId to it.quantity)
             }
             }
-
         }
         return null
     }
