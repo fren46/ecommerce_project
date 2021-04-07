@@ -42,8 +42,7 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
         return emptyList()
     }
 
-    override fun addTransaction(transactionDTO: TransactionDTO): String {
-
+    override fun addTransaction(transactionDTO: TransactionDTO): Double? {
         val transaction = mapper.toModel(transactionDTO)
         transaction.created = LocalDateTime.now()
         //val orderDTO=OrderDTO(buyer = "ciao",amount = 4.57f,id = "cadnde")
@@ -51,7 +50,7 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
         if (transaction.orderID.isNullOrBlank())
             transaction.orderID = "recharge"
         repo.save(transaction)
-        return transaction.id!!
+        return getAmount(transaction.buyerID!!)
     }
 
     @KafkaListener(topics = ["status"], groupId = "wallet")

@@ -9,5 +9,5 @@ interface WarehouseService {
     fun consumeProduct(id:String,n:Int):Map<String,Int>?
     fun getWarehouseList():List<WarehouseDTO>?
     fun getSimpleWarehouseList():List<SimpleWarehouseDTO>?
-    fun addProductInWarehouse(warehouseID:String, item: WarehouseItem):Int
+    fun addProductInWarehouse(warehouseID:String, item: WarehouseItem):Int?
 }

@@ -132,33 +132,51 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         return false
     }
 
-    override fun getWarehouseList(): List<WarehouseDTO>? {
+    override fun getWarehouseList(): List<WarehouseDTO> {
         val warehouseList= mutableListOf<WarehouseDTO>()
         repo.findAll().forEach{warehouse -> warehouseList.add(mapper.toDto(warehouse))}
         return warehouseList
     }
 
-    override fun getSimpleWarehouseList(): List<SimpleWarehouseDTO>? {
+    override fun getSimpleWarehouseList(): List<SimpleWarehouseDTO> {
         val warehouseList= mutableListOf<SimpleWarehouseDTO>()
         repo.findAll().forEach{warehouse -> warehouseList.add(SimpleWarehouseDTO(id = warehouse.id,name=warehouse.name))}
         return warehouseList
     }
 
-    override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): Int {
-        val warehouseList = repo.findAll()
-        warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {
-            warehouse.stocks.forEach{it->if(it.productId==item.productId) {
-                it.quantity+=item.quantity
-                repo.save(warehouse)
-                return 1
+    override fun addProductInWarehouse(warehouseID: String, item: WarehouseItem): Int? {
+        val warehouse = repo.findById(warehouseID)
+        if (warehouse.isPresent){
+            val wh = warehouse.get()
+            wh.stocks.forEach{
+                if(it.productId==item.productId) {
+                    it.quantity+=item.quantity
+                    repo.save(wh)
+                    return it.quantity
+                }
             }
-                count+=1}
-            if(count==warehouse.stocks.size){
-                warehouse.stocks.add(item)
-                repo.save(warehouse)
-                return 2
-            } } }
-        return 0
+            // if item not found it is added
+            wh.stocks.add(item)
+            repo.save(wh)
+            return item.quantity
+        }else
+            println("warehouse non trovato")
+            return null
+
+//        val warehouseList = repo.findAll()
+//        warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {
+//            warehouse.stocks.forEach{it->if(it.productId==item.productId) {
+//                it.quantity+=item.quantity
+//                repo.save(warehouse)
+//                return it.quantity
+//            }
+//                count+=1}
+//            if(count==warehouse.stocks.size){
+//                warehouse.stocks.add(item)
+//                repo.save(warehouse)
+//                return 2
+//            } } }
+//        return 0
     }
 
 

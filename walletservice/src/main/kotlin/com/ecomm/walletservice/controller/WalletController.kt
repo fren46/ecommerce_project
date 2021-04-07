@@ -18,7 +18,8 @@ class WalletController (val walletService: WalletServiceImpl) {
         val amount= walletService.getAmount(id)
         return if (amount!= null)
             ResponseEntity(amount, HttpStatus.OK)
-        else ResponseEntity(HttpStatus.NOT_FOUND)}
+        else
+            ResponseEntity(HttpStatus.NOT_FOUND)}
 
     @GetMapping("/{id}/transaction")
     @ApiOperation(value = "Return all the transaction for a given buyer")
@@ -32,13 +33,13 @@ class WalletController (val walletService: WalletServiceImpl) {
 
     @PostMapping("/transaction/add")
     @ApiOperation(value = "Add a transaction")
-    fun addTransaction(@RequestBody t: TransactionDTO?): ResponseEntity<String> {
-        return if (t != null) {
-            val id = walletService.addTransaction(t)
-            ResponseEntity("Transaction "+id+" added", HttpStatus.OK)
-        }
+    fun addTransaction(@RequestBody t: TransactionDTO): ResponseEntity<Double?> {
+        val amount = walletService.addTransaction(t)
+        return if (amount != null)
+            ResponseEntity(amount, HttpStatus.OK)
         else
-        ResponseEntity("Invalid body", HttpStatus.NOT_FOUND)}
+            ResponseEntity(HttpStatus.NOT_FOUND)
+    }
 
 }
 

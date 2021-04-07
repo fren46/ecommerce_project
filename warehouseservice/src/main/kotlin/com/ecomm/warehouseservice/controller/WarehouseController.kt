@@ -2,6 +2,7 @@ package com.ecomm.warehouseservice.controller
 
 import com.ecomm.commons.SimpleWarehouseDTO
 import com.ecomm.commons.WarehouseItem
+import com.ecomm.commons.WarningProductDTO
 import com.ecomm.warehouseservice.dto.WarehouseDTO
 import com.ecomm.warehouseservice.service.WarehouseServiceImpl
 import io.swagger.annotations.ApiOperation
@@ -37,43 +38,34 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
     @ApiOperation(value = "Return the list of warehouses")
     fun getWarehouseList(): ResponseEntity<List<WarehouseDTO>?> {
         val warehouseList= warehouseService.getWarehouseList()
-        return if (warehouseList != null)
+        return if (warehouseList.isNotEmpty())
             ResponseEntity(warehouseList, HttpStatus.OK)
         else
             ResponseEntity(null, HttpStatus.NOT_FOUND)
     }
 
     @GetMapping("/warehouses/simple")
-    @ApiOperation(value = "Return the list of warehouses")
+    @ApiOperation(value = "Return the list of simple warehouses")
     fun getSimpleWarehouseList(): ResponseEntity<List<SimpleWarehouseDTO>?> {
         val warehouseList= warehouseService.getSimpleWarehouseList()
-        return if (warehouseList != null)
-            ResponseEntity(warehouseList, HttpStatus.OK)
-        else
-            ResponseEntity(null, HttpStatus.NOT_FOUND)
+        return ResponseEntity(warehouseList, HttpStatus.OK)
     }
 
     @PostMapping("/product/{warehouseId}")
-    fun addProductInWarehouse(@RequestBody t: WarehouseItem,@PathVariable warehouseId: String): ResponseEntity<String> {
-        val product_added= warehouseService.addProductInWarehouse(warehouseId,t)
-        if (product_added==0)
-            return ResponseEntity("Product not present", HttpStatus.NOT_FOUND)
-        if (product_added==1)
-            return ResponseEntity("Product quantity increased", HttpStatus.OK)
-        return ResponseEntity("Product added ", HttpStatus.OK)
+    fun addProductInWarehouse(@RequestBody t: WarehouseItem,@PathVariable warehouseId: String): ResponseEntity<Int> {
+        val quantity = warehouseService.addProductInWarehouse(warehouseId,t)
+        if (quantity == null)
+            return ResponseEntity(HttpStatus.NOT_FOUND)
+        else
+            return ResponseEntity(quantity, HttpStatus.OK)
     }
 
-    @PostMapping("/warning/{warehouseId}/{prodId}")
-    fun modifyWarningInWarehouse(@RequestBody t: String,@PathVariable warehouseId: String, @PathVariable prodId: String): ResponseEntity<String> {
-        return try {
-            val num = t.toInt()
-            if(warehouseService.setWarning(warehouseId, prodId, num))
-                ResponseEntity("Product alarm modified", HttpStatus.OK)
-            else
-                ResponseEntity("Product alarm not modified", HttpStatus.NOT_MODIFIED)
-        }catch (ex: NumberFormatException) {
-            ResponseEntity("Product alarm must be an Integer", HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-        }
+    @PostMapping("/warning/{warehouseId}")
+    fun modifyWarningInWarehouse(@RequestBody t: WarningProductDTO,@PathVariable warehouseId: String): ResponseEntity<String> {
+        return if(warehouseService.setWarning(warehouseId, t.productId, t.warning))
+            ResponseEntity("Product alarm modified", HttpStatus.OK)
+        else
+            ResponseEntity("Product alarm not modified", HttpStatus.NOT_MODIFIED)
 
     }
 }

@@ -7,5 +7,5 @@ import java.math.BigDecimal
 interface WalletService {
     fun getAmount(id: String): Double?
     fun getTransaction(id: String): List<Transaction>?
-    fun addTransaction(transactionDTO:TransactionDTO):String?
+    fun addTransaction(transactionDTO:TransactionDTO):Double?
 }
