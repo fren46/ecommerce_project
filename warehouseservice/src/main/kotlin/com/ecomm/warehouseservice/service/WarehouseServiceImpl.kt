@@ -251,6 +251,11 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             warehouse.stocks.forEach{ if(it.productId==id && it.quantity>n) {
                 it.quantity-=n
                 repo.save(warehouse)
+                if(it.quantity<=it.alarm)
+                    this.kafkaTemplate2.send(
+                        KafkaChannels.WARNING.value,
+                        KafkaKeys.KEY_PRODUCT_WARNING.value,
+                        WarningDTO(wh,id))
                 return mapOf(it.productId to it.quantity)
             }
             }
