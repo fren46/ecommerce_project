@@ -25,10 +25,7 @@ import springfox.documentation.spring.web.plugins.Docket
 @SpringBootApplication
 @EnableScheduling
 @EnableCaching
-class CatalogserviceApplication(
-    @Value("\${application.urlOrderService}") private var HostOrderS: String,
-    @Value("\${application.urlWalletService}") private var HostWalletS: String,
-    @Value("\${application.urlWarehouseService}") private var HostWarehouseS: String)
+class CatalogserviceApplication()
 
 fun main(args: Array<String>) {
     runApplication<CatalogserviceApplication>(*args){

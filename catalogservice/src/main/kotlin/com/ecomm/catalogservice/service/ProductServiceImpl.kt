@@ -4,7 +4,11 @@ import com.ecomm.catalogservice.dto.ProductDTO
 import com.ecomm.catalogservice.exception.BadRequestException
 import com.ecomm.catalogservice.exception.ProductAlreadyExistsException
 import com.ecomm.catalogservice.repo.ProductRepository
+import com.ecomm.catalogservice.repo.UserRepository
+import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.Product
+import com.ecomm.commons.UserRole
+import com.ecomm.commons.WarningDTO
 import org.bson.types.ObjectId
 import org.mapstruct.Mapper
 import org.mapstruct.factory.Mappers
@@ -12,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.expression.common.ExpressionUtils.toFloat
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.handler.annotation.Header
+import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 
@@ -26,7 +33,9 @@ interface ProductMapper {
 
 @Service
 class ProductServiceImpl(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val userRepository: UserRepository,
+    private val orderServiceImpl: OrderServiceImpl
     ): ProductService {
 
     private val TOPIC: String = "test"
@@ -86,14 +95,20 @@ class ProductServiceImpl(
         }
     }
 
-    fun produceTestEvent(product: ProductDTO){
-        kafkaTemplate.send(TOPIC, product)
-    }
+    @KafkaListener(topics = ["warning"], groupId = "catalog")
+    //@Throws(IOException::class)
+    fun consumeWarningEvent(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
+        if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
+            var admins = userRepository.findByRolesContaining(UserRole.ROLE_ADMIN)
+            println(admins)
+            admins.forEach { admin ->
+                orderServiceImpl.sendEmail(
+                    "[ECOMM][WARNING] Product warning",
+                    "Dear Admin ${admin.name} ${admin.surname} the product with id ${dto.idProd} in the warehouse with id ${dto.idWh} crossed the threshold ",
+                    admin.email
+                )
+            }
 
-    @KafkaListener(
-        topics = ["test"],
-        groupId = "catalog")
-    fun consumeTestEvent(product: ProductDTO){
-        print(product)
+        }
     }
 }

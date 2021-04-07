@@ -13,16 +13,11 @@ class Initializer:CommandLineRunner {
     lateinit var repo:WarehouseRepository
 
     override fun run(vararg args: String?) {
-        repo.deleteAll()
-        val prod1= WarehouseItem("fifn",3)
-        val prod2= WarehouseItem("ciao",3)
-        val prod3= WarehouseItem("bello",3)
-        val warehouse1= Warehouse(name= "Milan",stocks = mutableSetOf(prod1,prod2))
-        val warehouse2= Warehouse(name= "Turin",stocks = mutableSetOf(prod1,prod2,prod3))
-        repo.save(warehouse1)
-        repo.save(warehouse2)
-
-
-
+        if (repo.findAll().isEmpty()){
+            val warehouse1= Warehouse(name= "Milan",stocks = mutableSetOf())
+            val warehouse2= Warehouse(name= "Turin",stocks = mutableSetOf())
+            repo.save(warehouse1)
+            repo.save(warehouse2)
+        }
     }
 }

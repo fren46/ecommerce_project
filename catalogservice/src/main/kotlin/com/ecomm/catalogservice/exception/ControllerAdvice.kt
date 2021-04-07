@@ -114,6 +114,26 @@ class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
         return ResponseEntity(errorDetails, HttpStatus.SERVICE_UNAVAILABLE)
     }
 
+    @ExceptionHandler(value = [(WarehouseNotFoundException::class)])
+    fun handleWarehouseNotFound(ex: WarehouseNotFoundException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+        val errorDetails = ErrorsDetails(
+            Date(),
+            "Warehouse not found",
+            ex.message!!
+        )
+        return ResponseEntity(errorDetails, HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(value = [(WalletNotFoundException::class)])
+    fun handleWalletNotFound(ex: WalletNotFoundException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+        val errorDetails = ErrorsDetails(
+            Date(),
+            "Wallet not found",
+            ex.message!!
+        )
+        return ResponseEntity(errorDetails, HttpStatus.NOT_FOUND)
+    }
+
     override fun handleHttpMessageNotReadable(ex: HttpMessageNotReadableException, headers: HttpHeaders, status: HttpStatus, request: WebRequest): ResponseEntity<Any> {
         //val apiError = ApiError(status, "Something went wrong with your request.", emptyList(), ex.localizedMessage)
         val errorDetails = ErrorsDetails(
@@ -123,4 +143,5 @@ class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
         )
         return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
     }
+
 }

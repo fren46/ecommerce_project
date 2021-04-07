@@ -36,7 +36,6 @@ class OrderServiceImpl(private val emailSender: JavaMailSender, private val user
         @Payload dto: OrderDTO,
         @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String
     ) {
-        println("porco schifo ho fallito dto: "+dto)
         if(key == KafkaKeys.KEY_ORDER_PAID.value){
             var customer = userRepository.findFirstById(dto.buyer!!)
             sendEmail(

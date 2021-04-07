@@ -36,6 +36,11 @@ class SecurityConfig(
             .antMatchers(HttpMethod.GET, "/orders/**").hasRole("CUSTOMER")
             .antMatchers(HttpMethod.POST, "/orders/**").hasRole("CUSTOMER")
             .antMatchers(HttpMethod.DELETE, "/orders/**").hasRole("CUSTOMER")
+            .antMatchers(HttpMethod.GET, "/warehouses").hasRole("ADMIN")
+            .antMatchers(HttpMethod.POST, "/warehouses/**").hasRole("ADMIN")
+            .antMatchers(HttpMethod.GET, "/wallet").hasRole("CUSTOMER")
+            .antMatchers(HttpMethod.GET, "/wallet/**").hasRole("ADMIN")
+            .antMatchers(HttpMethod.POST, "/wallet/**").hasRole("ADMIN")
             //.anyRequest().authenticated()
             .and()
             .csrf().disable();
