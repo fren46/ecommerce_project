@@ -9,13 +9,9 @@ import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.Product
 import com.ecomm.commons.UserRole
 import com.ecomm.commons.WarningDTO
-import org.bson.types.ObjectId
 import org.mapstruct.Mapper
 import org.mapstruct.factory.Mappers
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.expression.common.ExpressionUtils.toFloat
 import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
@@ -24,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.lang.IllegalArgumentException
 
 import java.util.*
-import kotlin.jvm.Throws
 
 @Mapper
 interface ProductMapper {
@@ -39,12 +34,10 @@ class ProductServiceImpl(
     private val orderServiceImpl: OrderServiceImpl
     ): ProductService {
 
-    private val TOPIC: String = "test"
+    private val mapper = Mappers.getMapper(ProductMapper::class.java)
 
-    private val mapper = Mappers.getMapper(ProductMapper::class.java);
-
-    @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String, ProductDTO>
+    //@Autowired
+    //lateinit var kafkaTemplate: KafkaTemplate<String, ProductDTO>
 
     override fun getProducts(): List<Product>{
         return productRepository.findAll()
@@ -100,7 +93,7 @@ class ProductServiceImpl(
     @KafkaListener(topics = ["warning"], groupId = "catalog")
     fun consumeWarningEvent(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
-            var admins = userRepository.findByRolesContaining(UserRole.ROLE_ADMIN)
+            val admins = userRepository.findByRolesContaining(UserRole.ROLE_ADMIN)
             //println(admins)
             admins.forEach { admin ->
                 orderServiceImpl.sendEmail(

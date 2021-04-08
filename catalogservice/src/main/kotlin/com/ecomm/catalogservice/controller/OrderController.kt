@@ -1,26 +1,17 @@
 package com.ecomm.catalogservice.controller
 
 import com.ecomm.commons.OrderDTO
-import com.ecomm.catalogservice.dto.clientOrderDTO
+import com.ecomm.catalogservice.dto.ClientOrderDTO
 import com.ecomm.catalogservice.exception.*
-import com.ecomm.catalogservice.repo.ProductRepository
-import com.ecomm.catalogservice.repo.UserRepository
 import com.ecomm.catalogservice.security.CustomUserDetails
 import com.ecomm.catalogservice.service.ProductServiceImpl
-import com.ecomm.commons.KafkaChannels
-import com.ecomm.commons.KafkaKeys
 import com.ecomm.commons.OrderStatus
 import com.ecomm.commons.UserRole
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
-import org.springframework.data.domain.jaxb.SpringDataJaxb
 import org.springframework.http.*
-import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -34,17 +25,12 @@ import javax.annotation.security.RolesAllowed
 @RestController
 @RequestMapping("/orders")
 class OrderController(
-    private val productService: ProductServiceImpl,
-    private val userRepository: UserRepository
+    private val productService: ProductServiceImpl
     ) {
 
     @Value("\${application.urlOrderService}")
     private lateinit var HostOrderS: String
-    val mapper: ObjectMapper = ObjectMapper()
     val restTemplate = RestTemplate()
-    private val TOPIC: String = "status"
-    @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
     val isAdmin: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_ADMIN.toString() }
     val isCustomer: (GrantedAuthority) -> Boolean = { it.authority == UserRole.ROLE_CUSTOMER.toString() }
@@ -76,7 +62,7 @@ class OrderController(
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
         val userDetail = auth.principal as CustomUserDetails
-        var isadmin :Boolean= false
+        var isadmin = false
         if (auth.authorities.any(isAdmin))
             isadmin = true
         try {
@@ -103,12 +89,12 @@ class OrderController(
     fun addOrder(
         @RequestBody
         @ApiParam(value = "Order object", required = true)
-        order: clientOrderDTO
+        order: ClientOrderDTO
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
         val userDetail = auth.principal as CustomUserDetails
         val priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
-        var sum: Float = 0.0f
+        var sum = 0.0f
         if ( (order.buyer == null && userDetail.authorities.any(isAdmin)) || order.prodList == null || order.address == null){
             throw BadRequestException("No correct Order in the request")
         }

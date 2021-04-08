@@ -23,5 +23,3 @@ class OrderNotFoundException (override val message: String?) : Exception(message
 class BadRequestDeletionOrderException (override val message: String?) : Exception(message)
 
 class NewStatusOrderException (override val message: String?) : Exception(message)
-
-class NotModifiedWarningException (override val message: String?) : Exception(message)

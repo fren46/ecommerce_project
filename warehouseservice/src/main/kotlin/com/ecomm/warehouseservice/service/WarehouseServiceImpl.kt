@@ -13,7 +13,6 @@ import org.mapstruct.factory.Mappers
  import org.springframework.stereotype.Service
  import org.springframework.transaction.annotation.Transactional
  import java.io.IOException
- import java.time.LocalDateTime
 
 @Service
 class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseService {
@@ -63,7 +62,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             return
         }
         else if (key == KafkaKeys.KEY_ORDER_CREATED.value) {
-            var temp = dto.copy(prodList = dto.prodList, whrecord = consumeProducts(dto.prodList))
+            val temp = dto.copy(prodList = dto.prodList, whrecord = consumeProducts(dto.prodList))
 
             if (temp.whrecord.isEmpty()) {
                 this.kafkaTemplate.send(
@@ -106,7 +105,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
     override fun getProductAvailability(id:String): WarehouseItem? {
         val warehouseList = repo.findAll()
         val productList = mutableListOf<WarehouseItem>()
-        warehouseList.forEach { warehouse -> warehouse.stocks.forEach { it -> productList.add(it) } }
+        warehouseList.forEach { warehouse -> warehouse.stocks.forEach { productList.add(it) } }
         val finallist=productList.groupBy { it.productId }                  // group items by name
             .values                               // take list of values
             .map {                                // for each list
@@ -167,7 +166,7 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         if (whrecord.isNullOrEmpty()) {
             return
         }
-        var temp = HashMap(whrecord)
+        val temp = HashMap(whrecord)
         temp.forEach { wh ->
             wh.value.forEach { item ->
                 println(addProductInWarehouse(wh.key, WarehouseItem(item.key, item.value)))
@@ -178,8 +177,8 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
 
     fun consumeProducts(products: MutableMap<String, Int>): MutableMap<String, MutableMap<String, Int>> {
 
-        var whrecord = mutableMapOf<String,MutableMap<String, Int>>()
-        var prods = HashMap(products)
+        val whrecord = mutableMapOf<String,MutableMap<String, Int>>()
+        val prods = HashMap(products)
         if(products.all { getProductAvailability(it.key)!!.quantity >= it.value }) {
 
             val warehouseList = repo.findAll()

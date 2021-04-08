@@ -95,7 +95,7 @@ class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(value = [(BadRequestDeletionOrderException::class)])
-    fun BadRequestDeletionOrderException(ex: BadRequestDeletionOrderException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+    fun badRequestDeletionOrderException(ex: BadRequestDeletionOrderException, request: WebRequest): ResponseEntity<ErrorsDetails> {
         val errorDetails = ErrorsDetails(
             Date(),
             "Cannot delete an Order already sent",
@@ -105,7 +105,7 @@ class ControllerAdviceRequestError : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(value = [(NewStatusOrderException::class)])
-    fun NewStatusOrderException(ex: NewStatusOrderException, request: WebRequest): ResponseEntity<ErrorsDetails> {
+    fun newStatusOrderException(ex: NewStatusOrderException, request: WebRequest): ResponseEntity<ErrorsDetails> {
         val errorDetails = ErrorsDetails(
             Date(),
             "Cannot handle the request",

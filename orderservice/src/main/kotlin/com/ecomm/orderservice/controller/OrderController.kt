@@ -3,7 +3,6 @@ package com.ecomm.orderservice.controller
 import com.ecomm.orderservice.dto.OrderMapper
 import com.ecomm.commons.OrderDTO
 import com.ecomm.orderservice.service.OrderServiceImpl
-import org.bson.types.ObjectId
 import org.mapstruct.factory.Mappers
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,17 +15,17 @@ import org.springframework.web.server.ResponseStatusException
 class OrderController(
     private val orderServiceImpl: OrderServiceImpl
 ) {
-    private val mapper = Mappers.getMapper(OrderMapper::class.java);
+    private val mapper = Mappers.getMapper(OrderMapper::class.java)
 
 
 
     @PostMapping
     fun createOrder(@RequestBody orderDto: OrderDTO): ResponseEntity<OrderDTO> {
-        val p = orderServiceImpl.createOrder(orderDto);
-        return ResponseEntity.ok(mapper.toDto(p));
+        val p = orderServiceImpl.createOrder(orderDto)
+        return ResponseEntity.ok(mapper.toDto(p))
     }
 
-    @GetMapping()
+    @GetMapping
     fun getOrders(): ResponseEntity<List<OrderDTO>> {
 
         return ResponseEntity.ok(mapper.toDtos(orderServiceImpl.getOrders()))
@@ -35,7 +34,7 @@ class OrderController(
     @GetMapping("/{id}")
     fun getOrder(@PathVariable id: String, @RequestParam userId: String, @RequestParam isAdmin: Boolean): ResponseEntity<OrderDTO> {
         try {
-            val p = orderServiceImpl.getOrder(id, userId, isAdmin);
+            val p = orderServiceImpl.getOrder(id, userId, isAdmin)
             return ResponseEntity.ok(p!!)
         }catch (ex: ResponseStatusException){
             throw ResponseStatusException(ex.status)
@@ -52,7 +51,7 @@ class OrderController(
 
     }
 
-    @PutMapping()
+    @PutMapping
     fun modifyOrder(@RequestBody order: OrderDTO): ResponseEntity<OrderDTO> {
         val res = orderServiceImpl.modifyOrder(order)
         return if(res.isPresent)

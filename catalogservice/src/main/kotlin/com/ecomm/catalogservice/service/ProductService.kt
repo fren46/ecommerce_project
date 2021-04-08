@@ -2,7 +2,6 @@ package com.ecomm.catalogservice.service
 
 import com.ecomm.catalogservice.dto.ProductDTO
 import com.ecomm.commons.Product
-import org.bson.types.ObjectId
 import java.util.*
 
 interface ProductService {

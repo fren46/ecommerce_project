@@ -1,7 +1,6 @@
 package com.ecomm.walletservice.controller
 
 import com.ecomm.commons.Transaction
-import com.ecomm.commons.WarehouseItem
 import com.ecomm.walletservice.dto.TransactionDTO
 import com.ecomm.walletservice.service.WalletServiceImpl
 import io.swagger.annotations.ApiOperation

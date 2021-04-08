@@ -24,23 +24,23 @@ class Initializer():CommandLineRunner {
         //repo.deleteAll()
         if (repo.findAll().isEmpty()){
             val user1= User(
-                name="Pippo",
-                surname = "Pluto",
-                email = "luigiferrettino@live.com",
+                name="Luigi",
+                surname = "Ferrettino",
+                email = "l.ferrettino@reply.it",
                 passw = passwenc.encode("admin"),
                 deliveryAddress = "Corso Duca",
                 roles = listOf(UserRole.ROLE_CUSTOMER,UserRole.ROLE_ADMIN))
             val user2= User(
-                name="Pippone",
-                surname = "Plutone",
-                email = "ferrettinoluigi@gmail.com",
+                name="Francesco",
+                surname = "Valente",
+                email = "fr.valente@reply.it",
                 passw = passwenc.encode("user"),
                 deliveryAddress = "Corso Ducone",
                 roles = listOf(UserRole.ROLE_CUSTOMER))
             val user3= User(
-                name="Pippino",
-                surname = "Plutino",
-                email = "luigi.ferrettino@studenti.polito.it",
+                name="Alessandro",
+                surname = "Pagliano",
+                email = "a.pagliano@reply.it",
                 passw = passwenc.encode("user"),
                 deliveryAddress = "Corso Duchino",
                 roles = listOf(UserRole.ROLE_CUSTOMER))

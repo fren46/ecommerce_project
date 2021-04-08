@@ -14,8 +14,6 @@ import java.io.IOException
 
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
-import org.springframework.mail.SimpleMailMessage
-import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException
 
 
 @Service
-class OrderServiceImpl(private val orderRepository: OrderRepository, private val emailSender: JavaMailSender): OrderService {
+class OrderServiceImpl(private val orderRepository: OrderRepository): OrderService {
 
     private val mapper = Mappers.getMapper(OrderMapper::class.java)
 
@@ -188,7 +186,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                     )
                 )
             )
-            val result = this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(modified))
+            this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(modified))
             mapper.toDto(modified)
         } else
             null
@@ -220,8 +218,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                             )
                         )
                     )
-                    val opt = Optional.of(modified)
-                    return opt
+                    return Optional.of(modified)
                 } else if ((order.get().status != OrderStatus.Canceled)
                         .and(order.get().status != OrderStatus.Failed)
                         .and(order.get().status != OrderStatus.Delivered)) {
@@ -238,19 +235,30 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                                 status = dto.status ?: order.get().status.toString(),
                                 modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
                                 createdDate = order.get().createdDate,
-                                address = if(order.get().status == OrderStatus.Delivering) order.get().address else dto.address
+                                address = if (order.get().status == OrderStatus.Delivering) order.get().address else dto.address
                             )
                         )
                     )
                     if (onlyStatus.status == OrderStatus.Canceled) {
-                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(onlyStatus))
-                    } else if(onlyStatus.status == OrderStatus.Delivered) {
-                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERED.value, mapper.toDto(onlyStatus))
-                    } else if(onlyStatus.status == OrderStatus.Delivering) {
-                        this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_DELIVERING.value, mapper.toDto(onlyStatus))
+                        this.kafkaTemplate.send(
+                            KafkaChannels.TOPIC.value,
+                            KafkaKeys.KEY_ORDER_CANCELED.value,
+                            mapper.toDto(onlyStatus)
+                        )
+                    } else if (onlyStatus.status == OrderStatus.Delivered) {
+                        this.kafkaTemplate.send(
+                            KafkaChannels.TOPIC.value,
+                            KafkaKeys.KEY_ORDER_DELIVERED.value,
+                            mapper.toDto(onlyStatus)
+                        )
+                    } else if (onlyStatus.status == OrderStatus.Delivering) {
+                        this.kafkaTemplate.send(
+                            KafkaChannels.TOPIC.value,
+                            KafkaKeys.KEY_ORDER_DELIVERING.value,
+                            mapper.toDto(onlyStatus)
+                        )
                     }
-                    val opt = Optional.of(onlyStatus)
-                    return opt
+                    return Optional.of(onlyStatus)
                 } else
                     return order
             } else
