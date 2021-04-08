@@ -100,7 +100,7 @@ class ProductServiceImpl(
     fun consumeWarningEvent(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
             var admins = userRepository.findByRolesContaining(UserRole.ROLE_ADMIN)
-            println(admins)
+            //println(admins)
             admins.forEach { admin ->
                 orderServiceImpl.sendEmail(
                     "[ECOMM][WARNING] Product warning",
@@ -108,7 +108,7 @@ class ProductServiceImpl(
                     admin.email
                 )
             }
-
         }
     }
+
 }

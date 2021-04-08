@@ -235,7 +235,9 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                     )
                     val opt = Optional.of(modified)
                     return opt
-                } else if ((order.get().status != OrderStatus.Canceled).and(order.get().status != OrderStatus.Failed)) {
+                } else if ((order.get().status != OrderStatus.Canceled)
+                        .and(order.get().status != OrderStatus.Failed)
+                        .and(order.get().status != OrderStatus.Delivered)) {
                     val onlyStatus = orderRepository.save(
                         mapper.toModel(
                             OrderDTO(

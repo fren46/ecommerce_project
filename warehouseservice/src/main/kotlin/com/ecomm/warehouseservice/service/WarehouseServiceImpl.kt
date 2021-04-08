@@ -38,6 +38,18 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
     @Transactional
     fun consume(@Payload dto: OrderDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_ORDER_PAID.value) {
+            dto.whrecord.forEach {wh ->
+                wh.value.forEach {item ->
+                    if(isProdAvailabilityLow(item.key, wh.key)) {
+                        val whItem = WarningDTO(wh.key, item.key)
+                        this.kafkaTemplate2.send(
+                            KafkaChannels.WARNING.value,
+                            KafkaKeys.KEY_PRODUCT_WARNING.value,
+                            whItem
+                        )
+                    }
+                }
+            }
             println("PAID: $dto")
             return
         }
@@ -67,18 +79,6 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
                     KafkaKeys.KEY_ORDER_AVAILABLE.value,
                     temp
                 )
-                temp.whrecord.forEach {wh ->
-                    wh.value.forEach {item ->
-                        if(isProdAvailabilityLow(item.key, wh.key)) {
-                            val whItem = WarningDTO(wh.key, item.key)
-                            this.kafkaTemplate2.send(
-                                KafkaChannels.WARNING.value,
-                                KafkaKeys.KEY_PRODUCT_WARNING.value,
-                                whItem
-                            )
-                        }
-                    }
-                }
             }
             println("CREATED: $dto")
             return

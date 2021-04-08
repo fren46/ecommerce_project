@@ -161,24 +161,27 @@ class OrderController(
             throw BadRequestException("New status missing")
         }else if (string == OrderStatus.Delivering.toString() ||
             string == OrderStatus.Delivered.toString()){
+            try {
+                val newOrderStatus = OrderDTO(id=id, status = string)
+                val res = restTemplate.exchange(
+                    RequestEntity<Any>(newOrderStatus, HttpMethod.PUT, URI.create("http://${HostOrderS}/orders")),
+                    OrderDTO::class.java
+                )
+                val newOrder = res.body
+                if (res.statusCode == HttpStatus.OK && newOrder != null) {
+                    if (newOrder.status == string){
+                        return newOrder
 
-            val newOrderStatus = OrderDTO(id=id, status = string)
-            val res = restTemplate.exchange(
-                RequestEntity<Any>(newOrderStatus, HttpMethod.PUT, URI.create("http://${HostOrderS}/orders")),
-                OrderDTO::class.java
-            )
-            val newOrder = res.body
-            if (res.statusCode == HttpStatus.OK && newOrder != null) {
-                if (newOrder.status == string){
-                    return newOrder
-
+                    }else{
+                        throw BadRequestException("New status not allowed")
+                    }
                 }else{
-                    throw NewStatusOrderException("Temporarily not able to change the status to ${string}")
+                    throw OrderNotFoundException("Order with id ${id} not found")
                 }
-            }else{
-                // TODO: 4/2/2021 check the statusCode and return the correct error
+            }catch (ex: RestClientException){
                 throw OrderNotFoundException("Order with id ${id} not found")
             }
+
         }else{
             throw BadRequestException("New status not allowed")
         }
