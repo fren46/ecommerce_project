@@ -23,7 +23,7 @@ class MongoConfig : AbstractMongoClientConfiguration() {
     }
 
     override fun mongoClient(): MongoClient {
-        val connectionString = ConnectionString("mongodb://localhost:27017/transaction")
+        val connectionString = ConnectionString("mongodb://mongodb:27017/transaction")
         val credentials = MongoCredential.createCredential("root", "admin", "password123".toCharArray())
         val mongoClientSettings = MongoClientSettings.builder()
             .credential(credentials)

@@ -1,12 +1,15 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+val jar: Jar by tasks;
+val bootJar: org.springframework.boot.gradle.tasks.bundling.BootJar by tasks;
+
 plugins {
-    id("org.springframework.boot") version "2.4.3"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.4.30"
-    kotlin("plugin.spring") version "1.4.30"
-    kotlin("kapt") version "1.4.30"
-    id("org.jetbrains.kotlin.plugin.noarg") version "1.4.31"
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.noarg")
 }
 
 group = "com.ecomm"
@@ -44,4 +47,11 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    mainClass.set("com.ecomm.warehouseservice.WarehouseserviceApplicationKt")
+}
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    launchScript()
 }

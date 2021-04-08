@@ -1,12 +1,21 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
+val jar: Jar by tasks;
+val bootJar: BootJar by tasks;
+
+jar.enabled = true;
+bootJar.enabled = true;
 
 plugins {
-    id("org.springframework.boot") version "2.4.3"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.4.30"
-    kotlin("plugin.spring") version "1.4.30"
-    kotlin("kapt") version "1.4.30"
+    id("org.springframework.boot")
+    id("io.spring.dependency-management")
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.noarg")
 }
+
 
 group = "com.ecomm"
 version = "0.0.1-SNAPSHOT"
@@ -44,4 +53,14 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+jar.enabled = true;
+bootJar.enabled = true;
+
+tasks.getByName<BootJar>("bootJar") {
+    mainClass.set("com.ecomm.catalogservice.CatalogserviceApplicationKt")
+}
+tasks.getByName<BootJar>("bootJar") {
+    launchScript()
 }
