@@ -1,6 +1,5 @@
 package com.ecomm.warehouseservice
 import com.ecomm.commons.Warehouse
-import com.ecomm.commons.WarehouseItem
 import com.ecomm.warehouseservice.repository.WarehouseRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
