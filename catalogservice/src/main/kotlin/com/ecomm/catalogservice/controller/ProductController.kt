@@ -151,11 +151,4 @@ class ProductController (
             throw ProductNotFoundException("Product with id ${id} not found")
     }
 
-
-
-
-//    per comunicare con gli altri service
-//    val restTemplate = RestTemplate()
-//    val res = restTemplate.getForObject("http://${host}/square?v=${v}", Int::class.java)
-
 }

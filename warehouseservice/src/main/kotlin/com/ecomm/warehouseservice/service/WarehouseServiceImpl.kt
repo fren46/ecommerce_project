@@ -26,7 +26,6 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
 
     @KafkaListener(topics = ["warning"], groupId = "warehouse")
     @Throws(IOException::class)
-    @Transactional
     fun consume2(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
             println("PRODUCT WARNING: $dto")
@@ -161,21 +160,6 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
             return item.quantity
         }else
             return null
-
-//        val warehouseList = repo.findAll()
-//        warehouseList.forEach {warehouse -> var count=0; if(warehouse.id==warehouseID) {
-//            warehouse.stocks.forEach{it->if(it.productId==item.productId) {
-//                it.quantity+=item.quantity
-//                repo.save(warehouse)
-//                return it.quantity
-//            }
-//                count+=1}
-//            if(count==warehouse.stocks.size){
-//                warehouse.stocks.add(item)
-//                repo.save(warehouse)
-//                return 2
-//            } } }
-//        return 0
     }
 
 

@@ -40,7 +40,6 @@ class OrderController(
         }catch (ex: ResponseStatusException){
             throw ResponseStatusException(ex.status)
         }
-
     }
 
     @DeleteMapping("/{id}")
@@ -61,32 +60,5 @@ class OrderController(
         else
             throw ResponseStatusException(HttpStatus.NOT_FOUND)
     }
-    /*@GetMapping("/open/{id}")
-    fun getProductOpen(@PathVariable id: ObjectId): ResponseEntity<OrderDTO> {
-        val p = orderServiceImpl.getOrder(id)
-        if(p.isPresent)
-            return ResponseEntity.ok(mapper.toDto(p.get()))
-        else
-            return ResponseEntity.notFound().build()
-    }
-
-    @GetMapping("/byrole/{id}")
-    fun getProductByRole(@PathVariable id: ObjectId): OrderDTO{
-        val p = orderServiceImpl.getOrder(id)
-        if(p.isPresent)
-            return mapper.toDto(p.get())
-        else
-            throw ResponseStatusException(HttpStatus.NOT_FOUND);
-    }
-    */
-    // example in case products had an owner
-    // see https://www.baeldung.com/spring-security-method-security
-    //@PreAuthorize("#owner == authentication.principal.username")
-    //@GetMapping("/byownw/{id}")
-    //fun getProductByOwnner(@PathVariable owner: String): ProductDTO {
-    //
-    //}
-    // https://www.baeldung.com/get-user-in-spring-security
-
 
 }

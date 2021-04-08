@@ -20,6 +20,7 @@ import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.lang.IllegalArgumentException
 
 import java.util.*
@@ -61,6 +62,7 @@ class ProductServiceImpl(
             0.0f
     }
 
+    @Transactional
     override fun addProduct(product: ProductDTO): Product{
         if ( productRepository.getProductByNameAndCategoryAndPrice(product.name!!, product.category!!, product.price!!) != null)
             throw ProductAlreadyExistsException("Product with name ${product.name} already exists")
@@ -96,7 +98,6 @@ class ProductServiceImpl(
     }
 
     @KafkaListener(topics = ["warning"], groupId = "catalog")
-    //@Throws(IOException::class)
     fun consumeWarningEvent(@Payload dto: WarningDTO, @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) key: String) {
         if (key == KafkaKeys.KEY_PRODUCT_WARNING.value) {
             var admins = userRepository.findByRolesContaining(UserRole.ROLE_ADMIN)

@@ -10,5 +10,5 @@ data class OrderDTO(
     var prodList: MutableMap<String, Int> = mutableMapOf<String, Int>(),
     var prodPrice: MutableMap<String, Float> = mutableMapOf<String, Float>(),
     var amount: Float? = null,
-    var status: String? = null
+    var status: String? = null,
 )

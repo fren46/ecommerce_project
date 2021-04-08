@@ -78,6 +78,13 @@ class OrderServiceImpl(private val emailSender: JavaMailSender, private val user
                 "Dear Customer ${customer.name} ${customer.surname}, \nYour order with id ${dto.id} is DELIVERING.",
                 customer.email
             )
+        }else if(key == KafkaKeys.KEY_ORDER_CANCELED.value){
+            val customer = userRepository.findFirstById(dto.buyer!!)
+            sendEmail(
+                "[ECOMM][UPDATE] Your order is CANCELED",
+                "Dear Customer ${customer.name} ${customer.surname}, \nYour order with id ${dto.id} is CANCELED.",
+                customer.email
+            )
         }
     }
 }

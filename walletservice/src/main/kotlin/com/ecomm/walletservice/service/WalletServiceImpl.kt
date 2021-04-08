@@ -45,8 +45,6 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
     override fun addTransaction(transactionDTO: TransactionDTO): Double? {
         val transaction = mapper.toModel(transactionDTO)
         transaction.created = LocalDateTime.now()
-        //val orderDTO=OrderDTO(buyer = "ciao",amount = 4.57f,id = "cadnde")
-        //this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_AVAILABLE.value, orderDTO)
         if (transaction.orderID.isNullOrBlank())
             transaction.orderID = "recharge"
         repo.save(transaction)
@@ -69,14 +67,11 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
                     println("Transaction " + transaction.id + " added")
                     order.transactionId = transaction.id
                     this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_PAID.value, order)
-                }
-
-                else {
+                }else{
                     this.kafkaTemplate.send("status", KafkaKeys.KEY_ORDER_FAILED.value, order)
                     println("Order "  + order.id + " failed")
                 }
-        }
-            else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
+        }else if (key== KafkaKeys.KEY_ORDER_CANCELED.value) {
                 if (order.transactionId.isNullOrBlank()) {
                     return
                 }
@@ -84,16 +79,13 @@ class WalletServiceImpl(private val repo:WalletRepository): WalletService {
                 if(result != null) {
                     if ((result.size > 1).or(result.size < 1)) {
                         return
-                    }
-                    else  {
-
+                    }else{
                         val transactionDTO = TransactionDTO(
                             buyerID = result[0].buyerID,
                             amount = Math.round((order.amount!!).toDouble() * 100) / 100.0,
                             created = LocalDateTime.now(),
                             orderID = order.id
                         )
-
                         repo.save(mapper.toModel(transactionDTO))
                         println("Order " + order.id + " Refunded")
                     }

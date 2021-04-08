@@ -31,19 +31,6 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
     @Autowired
     lateinit var kafkaTemplate: KafkaTemplate<String, OrderDTO>
 
-    fun sendEmail(
-        subject: String,
-        text: String,
-        targetEmail: String
-    ) {
-        val message = SimpleMailMessage()
-        message.setSubject(subject)
-        message.setText(text)
-        message.setTo(targetEmail)
-
-        emailSender.send(message)
-    }
-
     override fun createOrder(dto: OrderDTO): Order {
 
         val order = orderRepository.save(
@@ -56,7 +43,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                     amount = dto.amount,
                     status = OrderStatus.Pending.toString(),
                     modifiedDate = LocalDateTime.now(),
-                    createdDate = LocalDateTime.now()
+                    createdDate = LocalDateTime.now(),
+                    address = dto.address
                 )
             )
         )
@@ -88,13 +76,13 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                             amount = dto.amount ?: order.get().amount,
                             status = OrderStatus.Issued.toString(),
                             modifiedDate = LocalDateTime.now(),
-                            createdDate = order.get().createdDate
+                            createdDate = order.get().createdDate,
+                            address = order.get().address
                         )
                     )
                 )
                 val converted = mapper.toDto(saved)
                 println("PAID: $converted")
-                //sendEmail("[ECOMM][UPDATE] Your order is PAID", "Dear customer, \nYour order #${dto.id} is PAID", "ferrettinoluigi@gmail.com")
                 return
             }
         }
@@ -113,13 +101,13 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                             amount = order.get().amount,
                             status = OrderStatus.Canceled.toString(),
                             modifiedDate = LocalDateTime.now(),
-                            createdDate = order.get().createdDate
+                            createdDate = order.get().createdDate,
+                            address = order.get().address
                         )
                     )
                 )
                 val converted = mapper.toDto(saved)
                 println("CANCELED: $converted")
-                //sendEmail("[ECOMM][UPDATE] Your order is CANCELED", "Dear customer, \nYour order #${dto.id} is CANCELED. The refund is on its way.", "ferrettinoluigi@gmail.com")
                 return
             }
         }
@@ -138,13 +126,13 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                             amount = order.get().amount,
                             status = OrderStatus.Failed.toString(),
                             modifiedDate = LocalDateTime.now(),
-                            createdDate = order.get().createdDate
+                            createdDate = order.get().createdDate,
+                            address = order.get().address
                         )
                     )
                 )
                 val converted = mapper.toDto(saved)
                 println("FAILED: $converted")
-                //sendEmail("[ECOMM][UPDATE] Your order is FAILED", "Dear customer, \nYour order #${dto.id} is FAILE. You'll be refunded ASAP.", "ferrettinoluigi@gmail.com")
                 return
             }
         }
@@ -159,7 +147,6 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
     }
 
     fun getOrders(): List<Order> {
-
         return orderRepository.findAll()
     }
 
@@ -196,17 +183,16 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                         amount = order.get().amount,
                         status = OrderStatus.Canceled.toString(),
                         modifiedDate = LocalDateTime.now(),
-                        createdDate = order.get().createdDate
+                        createdDate = order.get().createdDate,
+                        address = order.get().address
                     )
                 )
             )
             val result = this.kafkaTemplate.send(KafkaChannels.TOPIC.value, KafkaKeys.KEY_ORDER_CANCELED.value, mapper.toDto(modified))
-
             mapper.toDto(modified)
         } else
             null
     }
-
 
 
     @Transactional
@@ -229,7 +215,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                                 amount = dto.amount ?: order.get().amount,
                                 status = dto.status ?: order.get().status.toString(),
                                 modifiedDate = LocalDateTime.now(),
-                                createdDate = order.get().createdDate
+                                createdDate = order.get().createdDate,
+                                address = dto.address ?: order.get().address,
                             )
                         )
                     )
@@ -250,7 +237,8 @@ class OrderServiceImpl(private val orderRepository: OrderRepository, private val
                                 amount = order.get().amount,
                                 status = dto.status ?: order.get().status.toString(),
                                 modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
-                                createdDate = order.get().createdDate
+                                createdDate = order.get().createdDate,
+                                address = if(order.get().status == OrderStatus.Delivering) order.get().address else dto.address
                             )
                         )
                     )

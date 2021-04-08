@@ -1,6 +1,6 @@
 package com.ecomm.catalogservice.controller
 
-import com.ecomm.catalogservice.dto.OrderDTO
+import com.ecomm.commons.OrderDTO
 import com.ecomm.catalogservice.dto.clientOrderDTO
 import com.ecomm.catalogservice.exception.*
 import com.ecomm.catalogservice.repo.ProductRepository
@@ -54,15 +54,12 @@ class OrderController(
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation(value = "Returns all the orders")
     fun getOrders(): List<OrderDTO>{
-        //val res = restTemplate.getForObject("http://${HostOrderS}/orders", List::class.java)
         val endpoint = URI.create("http://${HostOrderS}/orders")
         val request = RequestEntity<Any>(HttpMethod.GET, endpoint)
         // solution to problem of List<OrderDTO>. https://stackoverflow.com/questions/39679180/kotlin-call-java-method-with-classt-argument
         val respType = object: ParameterizedTypeReference<List<OrderDTO>>(){}
         val response = restTemplate.exchange(request, respType)
-        // TODO: 3/30/2021 check for the status code response.statusCode
         val body = response.body
-
         if (body != null)
             return body
         else
@@ -106,16 +103,16 @@ class OrderController(
     fun addOrder(
         @RequestBody
         @ApiParam(value = "Order object", required = true)
-        order: clientOrderDTO?
+        order: clientOrderDTO
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
         val userDetail = auth.principal as CustomUserDetails
-        var priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
+        val priceList:MutableMap<String, Float> = mutableMapOf<String, Float>()
         var sum: Float = 0.0f
-        if ( (order?.buyer == null && userDetail.authorities.any(isAdmin)) || order?.prodList == null ){
+        if ( (order.buyer == null && userDetail.authorities.any(isAdmin)) || order.prodList == null || order.address == null){
             throw BadRequestException("No correct Order in the request")
         }
-        if(order?.buyer == null && userDetail.authorities.any(isCustomer)) {
+        if(order.buyer == null && userDetail.authorities.any(isCustomer)) {
             // if the body of the request don't contain the buyer and the logged user is a Custom
             // the buyer value is filled with the id of the logged User retrieved by the Security Context
             order.buyer = userDetail.id
@@ -130,11 +127,12 @@ class OrderController(
                 prodList = order.prodList,
                 prodPrice = priceList,
                 amount = sum,
-                status = OrderStatus.Pending.toString())
+                status = OrderStatus.Pending.toString(),
+                address = order.address
+            )
             val endpoint = URI.create("http://${HostOrderS}/orders")
             val request = RequestEntity<OrderDTO>(orderDto, HttpMethod.POST, endpoint)
             val response = restTemplate.exchange(request, OrderDTO::class.java)
-            // TODO: 3/30/2021 check for the status code response.statusCode
             val body = response.body
             if (body!= null)
                 return body
@@ -157,7 +155,7 @@ class OrderController(
         @ApiParam(value = "New Order status", required = true)
         string: String?
     ): OrderDTO{
-        if (string == null ){
+        if (string == null){
             throw BadRequestException("New status missing")
         }else if (string == OrderStatus.Delivering.toString() ||
             string == OrderStatus.Delivered.toString()){
@@ -197,8 +195,6 @@ class OrderController(
     ): OrderDTO{
         val auth = SecurityContextHolder.getContext().authentication
         val userDetail = auth.principal as CustomUserDetails
-        //println(userDetail.id)
-        //val user = userRepository.findByEmail(auth.name)
         val newOrderStatus = OrderDTO(id=id, status = OrderStatus.Canceled.toString())
         try {
             val res = restTemplate.exchange(
@@ -212,56 +208,11 @@ class OrderController(
                 else
                     throw NewStatusOrderException("Temporarily not able to delete the order ${id}")
             }else{
-                // TODO: 4/2/2021 check the statusCode and return the correct error
                 throw OrderNotFoundException("Order with id ${id} not found")
             }
         }catch (ex: RestClientException){
             throw OrderNotFoundException("Order with id ${id} not found")
         }
-
-/*
-        val res = restTemplate.exchange(
-            RequestEntity<Any>(id, HttpMethod.DELETE, URI.create("http://${HostOrderS}/orders/${id}")),
-            OrderDTO::class.java
-        )
-        val body = res.body
-        if (body != null){
-            if(body.status == OrderStatus.Pending.toString() || body.status == OrderStatus.Issued.toString()){
-                this.kafkaTemplate.send(TOPIC, KafkaKeys.KEY_ORDER_CANCELED.value, id)
-                return body
-            }else{
-                throw BadRequestDeletionOrderException("Order with id ${id} has a status \"${body.status}\"." +
-                        " It is not possible to delete")
-            }
-        }else{
-            throw OrderNotFoundException("Order with id ${id} not deleted because not found")
-        }
-
- */
     }
-
-/*
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    @ApiOperation(value = "Delete order by id")
-    fun deleteProduct(
-        @PathVariable
-        @ApiParam(value="Order id")
-        id: String
-    ): String{
-        val endpoint = URI.create("http://${HostOrderS}/orders/${id}")
-        val request = RequestEntity<Any>(HttpMethod.DELETE, endpoint)
-        val respType = String::class.java
-        val response = restTemplate.exchange(request, respType)
-        val body = response.body
-        if (body != null)
-            return body
-        else
-            throw OrderNotFoundException("Order with id ${id} not found")
-    }
-
- */
-
 
 }
