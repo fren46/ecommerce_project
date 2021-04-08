@@ -6,12 +6,10 @@ import com.ecomm.catalogservice.repo.UserRepository
 import com.ecomm.catalogservice.security.PasswordEncoderAndMatcherConfig
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
-import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.stereotype.Component
 
 @Component
-class Initializer():CommandLineRunner {
+class Initializer:CommandLineRunner {
 
     @Autowired
     lateinit var repo:UserRepository
