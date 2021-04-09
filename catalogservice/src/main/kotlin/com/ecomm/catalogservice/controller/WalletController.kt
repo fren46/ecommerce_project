@@ -13,11 +13,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.RequestEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import java.net.URI
-import javax.annotation.security.RolesAllowed
 
 @RestController
 @RequestMapping("/wallet")

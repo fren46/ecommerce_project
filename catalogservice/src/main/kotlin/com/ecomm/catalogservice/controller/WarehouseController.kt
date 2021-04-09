@@ -5,7 +5,6 @@ import com.ecomm.catalogservice.exception.BadRequestException
 import com.ecomm.catalogservice.exception.ProductNotFoundException
 import com.ecomm.catalogservice.exception.WarehouseNotFoundException
 import com.ecomm.catalogservice.repo.ProductRepository
-import com.ecomm.catalogservice.repo.UserRepository
 import com.ecomm.commons.SimpleWarehouseDTO
 import com.ecomm.commons.WarehouseItem
 import io.swagger.annotations.ApiOperation
