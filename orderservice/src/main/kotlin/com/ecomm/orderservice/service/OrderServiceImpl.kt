@@ -200,67 +200,74 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
             if (!OrderStatus.values().any { it.name != dto.status })
                 return order
             if (order.isPresent) {
-                if (order.get().status == OrderStatus.Pending) {
-                    val modified = orderRepository.save(
-                        mapper.toModel(
-                            OrderDTO(
-                                id = order.get().id,
-                                buyer = dto.buyer ?: order.get().buyer,
-                                transactionId = dto.transactionId ?: order.get().transactionId,
-                                whrecord = if (dto.whrecord.isEmpty()) order.get().whrecord else dto.whrecord,
-                                prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
-                                prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
-                                amount = dto.amount ?: order.get().amount,
-                                status = dto.status ?: order.get().status.toString(),
-                                modifiedDate = LocalDateTime.now(),
-                                createdDate = order.get().createdDate,
-                                address = order.get().address,
-                            )
+                when {
+                    order.get().status == OrderStatus.Pending -> {
+                        val modified = orderRepository.save(
+                                mapper.toModel(
+                                        OrderDTO(
+                                                id = order.get().id,
+                                                buyer = dto.buyer ?: order.get().buyer,
+                                                transactionId = dto.transactionId ?: order.get().transactionId,
+                                                whrecord = if (dto.whrecord.isEmpty()) order.get().whrecord else dto.whrecord,
+                                                prodList = if (dto.prodList.isEmpty()) order.get().prodList else dto.prodList,
+                                                prodPrice = if (dto.prodPrice.isEmpty()) order.get().prodPrice else dto.prodPrice,
+                                                amount = dto.amount ?: order.get().amount,
+                                                status = dto.status ?: order.get().status.toString(),
+                                                modifiedDate = LocalDateTime.now(),
+                                                createdDate = order.get().createdDate,
+                                                address = order.get().address,
+                                        )
+                                )
                         )
-                    )
-                    return Optional.of(modified)
-                } else if ((order.get().status != OrderStatus.Canceled)
-                        .and(order.get().status != OrderStatus.Failed)
-                        .and(order.get().status != OrderStatus.Delivered)) {
-                    val onlyStatus = orderRepository.save(
-                        mapper.toModel(
-                            OrderDTO(
-                                id = order.get().id,
-                                buyer = order.get().buyer,
-                                transactionId = order.get().transactionId,
-                                whrecord = order.get().whrecord,
-                                prodList = order.get().prodList,
-                                prodPrice = order.get().prodPrice,
-                                amount = order.get().amount,
-                                status = dto.status ?: order.get().status.toString(),
-                                modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
-                                createdDate = order.get().createdDate,
-                                address = order.get().address
-                            )
-                        )
-                    )
-                    if (onlyStatus.status == OrderStatus.Canceled) {
-                        this.kafkaTemplate.send(
-                            KafkaChannels.TOPIC.value,
-                            KafkaKeys.KEY_ORDER_CANCELED.value,
-                            mapper.toDto(onlyStatus)
-                        )
-                    } else if (onlyStatus.status == OrderStatus.Delivered) {
-                        this.kafkaTemplate.send(
-                            KafkaChannels.TOPIC.value,
-                            KafkaKeys.KEY_ORDER_DELIVERED.value,
-                            mapper.toDto(onlyStatus)
-                        )
-                    } else if (onlyStatus.status == OrderStatus.Delivering) {
-                        this.kafkaTemplate.send(
-                            KafkaChannels.TOPIC.value,
-                            KafkaKeys.KEY_ORDER_DELIVERING.value,
-                            mapper.toDto(onlyStatus)
-                        )
+                        return Optional.of(modified)
                     }
-                    return Optional.of(onlyStatus)
-                } else
-                    return order
+                    (order.get().status != OrderStatus.Canceled)
+                            .and(order.get().status != OrderStatus.Failed)
+                            .and(order.get().status != OrderStatus.Delivered) -> {
+                        val onlyStatus = orderRepository.save(
+                                mapper.toModel(
+                                        OrderDTO(
+                                                id = order.get().id,
+                                                buyer = order.get().buyer,
+                                                transactionId = order.get().transactionId,
+                                                whrecord = order.get().whrecord,
+                                                prodList = order.get().prodList,
+                                                prodPrice = order.get().prodPrice,
+                                                amount = order.get().amount,
+                                                status = dto.status ?: order.get().status.toString(),
+                                                modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
+                                                createdDate = order.get().createdDate,
+                                                address = order.get().address
+                                        )
+                                )
+                        )
+                        when (onlyStatus.status) {
+                            OrderStatus.Canceled -> {
+                                this.kafkaTemplate.send(
+                                        KafkaChannels.TOPIC.value,
+                                        KafkaKeys.KEY_ORDER_CANCELED.value,
+                                        mapper.toDto(onlyStatus)
+                                )
+                            }
+                            OrderStatus.Delivered -> {
+                                this.kafkaTemplate.send(
+                                        KafkaChannels.TOPIC.value,
+                                        KafkaKeys.KEY_ORDER_DELIVERED.value,
+                                        mapper.toDto(onlyStatus)
+                                )
+                            }
+                            OrderStatus.Delivering -> {
+                                this.kafkaTemplate.send(
+                                        KafkaChannels.TOPIC.value,
+                                        KafkaKeys.KEY_ORDER_DELIVERING.value,
+                                        mapper.toDto(onlyStatus)
+                                )
+                            }
+                        }
+                        return Optional.of(onlyStatus)
+                    }
+                    else -> return order
+                }
             } else
                 return order
         }
