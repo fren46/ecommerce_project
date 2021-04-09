@@ -11,13 +11,18 @@ import com.ecomm.commons.UserRole
 import com.ecomm.commons.WarningDTO
 import org.mapstruct.Mapper
 import org.mapstruct.factory.Mappers
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpMethod
+import org.springframework.http.RequestEntity
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.RestTemplate
 import java.lang.IllegalArgumentException
+import java.net.URI
 
 import java.util.*
 
@@ -34,10 +39,10 @@ class ProductServiceImpl(
     private val orderServiceImpl: OrderServiceImpl
     ): ProductService {
 
+    @Value("\${application.urlWarehouseService}")
+    private lateinit var HostWarehouseS: String
     private val mapper = Mappers.getMapper(ProductMapper::class.java)
-
-    //@Autowired
-    //lateinit var kafkaTemplate: KafkaTemplate<String, ProductDTO>
+    val restTemplate = RestTemplate()
 
     override fun getProducts(): List<Product>{
         return productRepository.findAll()
@@ -84,6 +89,9 @@ class ProductServiceImpl(
 
     override fun deleteProduct(id: String): Optional<Product> {
         try {
+            val endpoint = URI.create("http://${HostWarehouseS}/product/${id}")
+            val request = RequestEntity<Any>(HttpMethod.DELETE, endpoint)
+            val response = restTemplate.exchange(request, String::class.java)
             return productRepository.deleteProductById(id)
         }catch (ex: IllegalArgumentException){
             throw BadRequestException("Illegal argument")
