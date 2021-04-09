@@ -93,6 +93,9 @@ services:
       - mongodb-primary
       - broker
       - zookeeper
+      - orderservice
+      - walletservice
+      - warehouseservice
     restart: always
     ports:
       - "8080:8080"
@@ -105,6 +108,8 @@ services:
       - mongodb-primary
       - broker
       - zookeeper
+      - walletservice
+      - warehouseservice
     restart: always
     ports:
       - "8081:8081"
