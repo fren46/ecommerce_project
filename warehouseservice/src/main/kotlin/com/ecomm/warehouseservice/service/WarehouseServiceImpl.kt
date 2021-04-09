@@ -130,6 +130,15 @@ class WarehouseServiceImpl(private val repo:WarehouseRepository): WarehouseServi
         return false
     }
 
+    fun deleteProductAll(productId: String): String {
+        val warehouseList = repo.findAll()
+        warehouseList.forEach { wh->
+            wh.stocks.removeIf { it.productId.equals(productId) }
+            repo.save(wh)
+        }
+        return productId
+    }
+
     override fun getWarehouseList(): List<WarehouseDTO> {
         val warehouseList= mutableListOf<WarehouseDTO>()
         repo.findAll().forEach{warehouse -> warehouseList.add(mapper.toDto(warehouse))}
