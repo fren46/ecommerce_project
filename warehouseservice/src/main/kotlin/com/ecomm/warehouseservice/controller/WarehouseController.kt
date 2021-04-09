@@ -59,6 +59,11 @@ class WarehouseController (val warehouseService: WarehouseServiceImpl) {
             return ResponseEntity(quantity, HttpStatus.OK)
     }
 
+    @DeleteMapping("/product/{productId}")
+    fun deleteProducts(@PathVariable productId: String): ResponseEntity<String> {
+        return ResponseEntity(warehouseService.deleteProductAll(productId),HttpStatus.OK)
+    }
+
     @PostMapping("/warning/{warehouseId}")
     fun modifyWarningInWarehouse(@RequestBody t: WarningProductDTO,@PathVariable warehouseId: String): ResponseEntity<String> {
         return if(warehouseService.setWarning(warehouseId, t.productId, t.warning))
