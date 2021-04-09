@@ -16,9 +16,6 @@ services:
     container_name: broker
     depends_on:
       - zookeeper
-    ports:
-      - "9092:9092"
-      - "9101:9101"
     restart: always
     environment:
       KAFKA_BROKER_ID: 1
@@ -44,8 +41,6 @@ services:
     hostname: mongodb
     container_name: mongodb-primary
     image: 'bitnami/mongodb:latest'
-    ports:
-      - "27017:27017"
     restart: always
     environment:
       - MONGODB_ADVERTISED_HOSTNAME=mongodb-primary
@@ -111,8 +106,6 @@ services:
       - walletservice
       - warehouseservice
     restart: always
-    ports:
-      - "8081:8081"
 
   walletservice:
     image: luigiferrettino/ecommerce:walletservice
@@ -123,8 +116,6 @@ services:
       - broker
       - zookeeper
     restart: always
-    ports:
-      - "8082:8082"
 
   warehouseservice:
     image: luigiferrettino/ecommerce:warehouseservice
@@ -135,8 +126,6 @@ services:
       - broker
       - zookeeper
     restart: always
-    ports:
-      - "8083:8083"
 
 volumes:
   mongodb_master_data:
