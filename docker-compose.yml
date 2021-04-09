@@ -81,7 +81,7 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey123
 
   catalogservice:
-    image: docker.pkg.github.com/fren46/ecommerce_project/catalogservice:0.9
+    image: luigiferrettino/ecommerce:catalogservice
     hostname: catalogservice
     container_name: catalogservice
     depends_on:
@@ -92,7 +92,7 @@ services:
       - "8080:8080"
 
   orderservice:
-    image: docker.pkg.github.com/fren46/ecommerce_project/orderservice:0.9
+    image: luigiferrettino/ecommerce:orderservice
     hostname: orderservice
     container_name: orderservice
     depends_on:
@@ -103,7 +103,7 @@ services:
       - "8081:8081"
 
   walletservice:
-    image: docker.pkg.github.com/fren46/ecommerce_project/walletservice:0.9
+    image: luigiferrettino/ecommerce:walletservice
     hostname: walletservice
     container_name: walletservice
     depends_on:
@@ -114,7 +114,7 @@ services:
       - "8082:8082"
 
   warehouseservice:
-    image: docker.pkg.github.com/fren46/ecommerce_project/warehouseservice:0.9
+    image: luigiferrettino/ecommerce:warehouseservice
     hostname: warehouseservice
     container_name: warehouseservice
     depends_on:
