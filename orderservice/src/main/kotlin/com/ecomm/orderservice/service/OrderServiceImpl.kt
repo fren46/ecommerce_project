@@ -214,7 +214,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                                 status = dto.status ?: order.get().status.toString(),
                                 modifiedDate = LocalDateTime.now(),
                                 createdDate = order.get().createdDate,
-                                address = dto.address ?: order.get().address,
+                                address = order.get().address,
                             )
                         )
                     )
@@ -235,7 +235,7 @@ class OrderServiceImpl(private val orderRepository: OrderRepository): OrderServi
                                 status = dto.status ?: order.get().status.toString(),
                                 modifiedDate = if (dto.status == order.get().status.toString()) order.get().modifiedDate else LocalDateTime.now(),
                                 createdDate = order.get().createdDate,
-                                address = if (order.get().status == OrderStatus.Delivering) order.get().address else dto.address
+                                address = order.get().address
                             )
                         )
                     )

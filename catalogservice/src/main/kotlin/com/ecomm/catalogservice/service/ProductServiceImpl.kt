@@ -91,7 +91,7 @@ class ProductServiceImpl(
         try {
             val endpoint = URI.create("http://${HostWarehouseS}/product/${id}")
             val request = RequestEntity<Any>(HttpMethod.DELETE, endpoint)
-            val response = restTemplate.exchange(request, String::class.java)
+            restTemplate.exchange(request, String::class.java)
             return productRepository.deleteProductById(id)
         }catch (ex: IllegalArgumentException){
             throw BadRequestException("Illegal argument")
