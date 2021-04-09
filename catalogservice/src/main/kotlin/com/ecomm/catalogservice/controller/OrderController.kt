@@ -104,26 +104,30 @@ class OrderController(
             order.buyer = userDetail.id
         }
         if (auth.authorities.any(isAdmin) || (userDetail.id == order.buyer && auth.authorities.any(isCustomer))){
-            // calculate prodPrice
-            order.prodList.keys.forEach { prodId -> priceList[prodId] = productService.getProductPrice(prodId) }
-            // calculate amount
-            order.prodList.keys.forEach { prodId -> sum += (order.prodList[prodId]!! * priceList[prodId]!!) }
-            val orderDto = OrderDTO(
-                buyer = order.buyer,
-                prodList = order.prodList,
-                prodPrice = priceList,
-                amount = sum,
-                status = OrderStatus.Pending.toString(),
-                address = order.address
-            )
-            val endpoint = URI.create("http://${HostOrderS}/orders")
-            val request = RequestEntity<OrderDTO>(orderDto, HttpMethod.POST, endpoint)
-            val response = restTemplate.exchange(request, OrderDTO::class.java)
-            val body = response.body
-            if (body!= null)
-                return body
-            else
-                throw BadRequestException("Bad Request")
+            if (order.prodList.any {prod -> productService.getProduct(prod.key).isPresent}){
+                // calculate prodPrice
+                order.prodList.keys.forEach { prodId -> priceList[prodId] = productService.getProductPrice(prodId) }
+                // calculate amount
+                order.prodList.keys.forEach { prodId -> sum += (order.prodList[prodId]!! * priceList[prodId]!!) }
+                val orderDto = OrderDTO(
+                    buyer = order.buyer,
+                    prodList = order.prodList,
+                    prodPrice = priceList,
+                    amount = sum,
+                    status = OrderStatus.Pending.toString(),
+                    address = order.address
+                )
+                val endpoint = URI.create("http://${HostOrderS}/orders")
+                val request = RequestEntity<OrderDTO>(orderDto, HttpMethod.POST, endpoint)
+                val response = restTemplate.exchange(request, OrderDTO::class.java)
+                val body = response.body
+                if (body!= null)
+                    return body
+                else
+                    throw BadRequestException("Bad Request")
+            }else{
+                throw BadRequestException("Insert only correct products")
+            }
         } else {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "User ${auth.name} cannot make an order for another user")
         }
