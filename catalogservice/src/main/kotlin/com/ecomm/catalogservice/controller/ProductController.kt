@@ -78,14 +78,14 @@ class ProductController (
         @PathVariable
         @ApiParam(value = "Product id", required = true)
         id: String
-    ): MutableMap<String,Int>{
+    ): MutableMap<String,Any>{
         val res = restTemplate.exchange(
             RequestEntity<Any>(HttpMethod.GET, URI.create("http://${HostWarehouseS}/product/${id}/availability")),
             WarehouseItem::class.java
         )
         val body = res.body
         if (res.statusCode == HttpStatus.OK && body != null) {
-            return mutableMapOf(body.productId to body.quantity)
+            return mutableMapOf("productId" to body.productId, "quantity" to body.quantity)
         }else{
             // TODO: 4/2/2021 check the statusCode and return the correct error
             throw ProductNotFoundException("Product with id ${id} not found")
