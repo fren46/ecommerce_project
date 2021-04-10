@@ -1,7 +1,7 @@
 package com.ecomm.catalogservice.controller
 
+import com.ecomm.catalogservice.dto.UserDTO
 import com.ecomm.catalogservice.repo.UserRepository
-import com.ecomm.commons.User
 import io.swagger.annotations.ApiOperation
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,7 +18,17 @@ class UserController (
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @ApiOperation(value = "Returns all the users")
-    fun getUsers(): List<User> {
-        return userRepository.findAll()
+    fun getUsers(): List<UserDTO> {
+        val users = userRepository.findAll()
+        return users.map { user ->
+            UserDTO(
+                user.id,
+                user.name,
+                user.surname,
+                user.email,
+                user.deliveryAddress,
+                user.roles
+            )
+        }
     }
 }
