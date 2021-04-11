@@ -4,13 +4,12 @@ Final project from the Advanced Programming course of the Polytechnic University
 
 ## Usage
 
-Performing the following command inside the repo of the project to automatically pull and run the containers: 
+Performing the following command from the folder where the `docker-compose.yml` is saved to automatically pull and run the containers: 
 
 ```bash
 docker-compose up -d
 ```
-
-The service is exposed on port 8080 and API documentation of the project is available for consultation on the [swagger editor](editor.swagger.io) after importing the swagger.yaml from the assets of the project release. 
+The file is available in the assets of the project latest release (`v1.0`). Moreover, `swagger.yaml` can be used for building the API documentation on [swagger editor](editor.swagger.io). The only endpoint service (`catalogservice`) is exposed on port 8080.
 
 - Credentials for testing:
     - ADMIN user: _l.ferrettino@reply.it_
